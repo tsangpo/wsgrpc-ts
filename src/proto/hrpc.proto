@@ -1,0 +1,55 @@
+
+syntax = "proto3";
+
+package hrpc;
+
+/**
+四种调用数据包序列
+
+Unary -> Unary
+{header, body} -> {body|trailer}
+(Req): Promise<Res>
+
+Unary -> Stream
+{header, body} -> {body} ... {trailer}
+(Req): Promise<AsyncIterator<Res>>
+
+Stream -> Unary
+{header} {body} ... {trailer} -> {body|trailer}
+(Stream<Req>): Promise<Res>
+
+Stream -> Stream
+{header} {body} ... {trailer} -> {body} ... {trailer}
+(Stream<Req>): Promise<AsyncIterator<Res>>
+ */
+
+message DataFrame {
+  // request
+  message Header {
+    string service = 1;
+    string method = 2;
+  }
+  // stream end or error message
+  message Trailer {
+    string status = 1;
+    string message = 2;
+  }
+
+  int32 callID = 1;
+  Header header = 2;
+  Trailer trailer = 3;
+  bytes body = 4;
+}
+
+message Endponit { string url = 1; }
+
+message Channel {}
+
+message Simple {
+  message OK {}
+}
+
+service WS {
+  rpc GetChannel(stream Endponit) returns (stream Channel);
+  rpc pullEvents(Simple.OK) returns (stream Endponit);
+}
