@@ -15,4 +15,5 @@ test-jspb:
 		--grpc-web_out=import_style=typescript,mode=grpcweb:$OUT_DIR
 
 test-pbjs:
-	npx pbjs -t static-module -o src/proto/hrpc.pbjs.js -w es6 --es6 src/proto/hrpc.proto
+	# npx pbjs -t static-module -o src/proto/hrpc.pbjs.js -w es6 --es6 src/proto/hrpc.proto
+	npx pbjs -t static-module -o src/proto/test.pbjs.js -w es6 --es6 src/proto/test.proto

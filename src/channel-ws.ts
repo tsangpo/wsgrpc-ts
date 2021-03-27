@@ -20,6 +20,7 @@ export class WebSocketChannel {
     if (!this.connectionFuture) {
       const future = new Future<WebSocketConnection>();
       const ws = new WebSocket(this.url);
+      ws.binaryType = "arraybuffer";
       ws.onopen = () => {
         future.resolve(new WebSocketConnection(ws));
       };
@@ -127,6 +128,10 @@ class WebSocketConnection {
       }
     };
     ws.onclose = () => {
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
       this._calls.forEach((cb) => cb(null));
       this._calls.clear();
     };
@@ -199,7 +204,6 @@ class WebSocketConnection {
     request: any
   ) {
     const stream = new Stream((reason: any) => {
-      this._calls.delete(callID);
       this.sendMessage({
         callID,
         trailer: { status: "ABORT", message: reason?.toString() },
@@ -216,10 +220,11 @@ class WebSocketConnection {
         stream.write(message);
       }
       if (frame.trailer) {
-        this._calls.delete(callID);
         if (frame.trailer.status == "OK") {
+          this._calls.delete(callID);
           stream.end();
-        } else {
+        } else if (frame.trailer.status == "ERROR") {
+          this._calls.delete(callID);
           stream.error(new Error(frame.trailer.message));
         }
       }
@@ -243,7 +248,6 @@ class WebSocketConnection {
     request: Stream<any>
   ) {
     const stream = new Stream((reason: any) => {
-      this._calls.delete(callID);
       this.sendMessage({
         callID,
         trailer: { status: "ABORT", message: reason?.toString() },
@@ -260,12 +264,13 @@ class WebSocketConnection {
         stream.write(message);
       }
       if (frame.trailer) {
-        this._calls.delete(callID);
         if (frame.trailer.status == "OK") {
+          this._calls.delete(callID);
           stream.end();
         } else if (frame.trailer.status == "ABORT") {
           request.abort(new Error(frame.trailer.message));
-        } else {
+        } else if (frame.trailer.status == "ERROR") {
+          this._calls.delete(callID);
           stream.error(new Error(frame.trailer.message));
         }
       }

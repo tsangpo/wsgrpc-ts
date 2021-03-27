@@ -5,7 +5,7 @@
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "bin": {
-    "hrpc-ts": "dist/bin.js"
+    "hrpc-ts": "dist/bin/main.js"
   },
   "scripts": {
     "build": "tsc"
@@ -13,13 +13,10 @@
   "author": "tsangpo <tsangpozheng@gmail.com> (https://github.com/tsangpo/hrpc-ts)",
   "license": "ISC",
   "devDependencies": {
-    "@types/google-protobuf": "^3.7.4",
-    "@types/node": "^14.14.35",
+    "@types/node": "^14.14.37",
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@grpc/proto-loader": "^0.5.6",
-    "google-protobuf": "^3.15.6",
     "node-fetch": "^2.6.1",
     "protobufjs": "^6.10.2",
     "ws": "^7.4.4"

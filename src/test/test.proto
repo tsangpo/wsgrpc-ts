@@ -1,0 +1,29 @@
+
+syntax = "proto3";
+
+package test;
+
+message W {
+  message N { int32 id = 1; }
+}
+
+message DataFrame {
+  // request
+  message Header {
+    string service = 1;
+    string method = 2;
+  }
+  // stream end or error message
+  message Trailer {
+    string status = 1;
+    string message = 2;
+  }
+
+  int32 callID = 1;
+  Header header = 2;
+  repeated Trailer trailer = 3;
+  bytes body = 4;
+  repeated int32 nnn = 5;
+
+  W.N n = 10;
+}
