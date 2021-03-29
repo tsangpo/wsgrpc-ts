@@ -1,6 +1,11 @@
-import { IDeserializer, ISerializer } from "./channel";
-import { hrpc } from "./proto/hrpc.proto";
-import { Future, Stream } from "./utils";
+import {
+  hrpc,
+  Future,
+  Stream,
+  IDeserializer,
+  ISerializer,
+  IFrameCallback,
+} from ".";
 
 const WebSocket_OPEN = 1;
 
@@ -113,16 +118,14 @@ export class WebSocketChannel {
   }
 }
 
-type ICallback = (frame: hrpc.IDataFrame | null) => void;
-
 class WebSocketConnection {
   _nextCallID = 1;
-  _calls = new Map<number, ICallback>();
+  _calls = new Map<number, IFrameCallback>();
 
   constructor(public ws: WebSocket) {
     ws.onmessage = (event) => {
-      let frame = hrpc.DataFrame.deserializeBinary(new Uint8Array(event.data));
-      let callback = this._calls.get(frame.callID);
+      let frame = hrpc.DataFrame.decode(new Uint8Array(event.data));
+      let callback = this._calls.get(frame.callID!);
       if (callback) {
         callback(frame);
       }
@@ -137,7 +140,7 @@ class WebSocketConnection {
     };
   }
 
-  private registerCall(callback: ICallback) {
+  private registerCall(callback: IFrameCallback) {
     const cid = this._nextCallID;
     this._calls.set(cid, callback);
     this._nextCallID += 2;
@@ -148,7 +151,7 @@ class WebSocketConnection {
     if (this.ws.readyState != WebSocket_OPEN) {
       return;
     }
-    const data = hrpc.DataFrame.serializeBinary(message);
+    const data = hrpc.DataFrame.encode(message);
 
     if (typeof window != "undefined" && (window as any).wx) {
       // weixin mini game
@@ -170,19 +173,17 @@ class WebSocketConnection {
     const future = new Future();
     const callID = this.registerCall((frame) => {
       if (!frame) {
-        this._calls.delete(callID);
         future.reject(new Error("lost connection"));
         return;
       }
+      this._calls.delete(callID);
       if (frame.body) {
-        this._calls.delete(callID);
         const message = responseDeserializeBinary(frame.body);
         future.resolve(message);
         return;
       }
       if (frame.trailer) {
         if (frame.trailer.status == "ERROR") {
-          this._calls.delete(callID);
           future.reject(new Error(frame.trailer.message));
         }
       }
@@ -211,7 +212,6 @@ class WebSocketConnection {
     });
     const callID = this.registerCall((frame) => {
       if (!frame) {
-        this._calls.delete(callID);
         stream.error(new Error("lost connection"));
         return;
       }
@@ -220,11 +220,10 @@ class WebSocketConnection {
         stream.write(message);
       }
       if (frame.trailer) {
+        this._calls.delete(callID);
         if (frame.trailer.status == "OK") {
-          this._calls.delete(callID);
           stream.end();
         } else if (frame.trailer.status == "ERROR") {
-          this._calls.delete(callID);
           stream.error(new Error(frame.trailer.message));
         }
       }
@@ -253,10 +252,15 @@ class WebSocketConnection {
         trailer: { status: "ABORT", message: reason?.toString() },
       });
     });
+    const checkCloseCall = () => {
+      if (stream.closed && request.closed) {
+        this._calls.delete(callID);
+      }
+    };
     const callID = this.registerCall((frame) => {
       if (!frame) {
-        this._calls.delete(callID);
         stream.error(new Error("lost connection"));
+        request.abort(new Error("lost connection"));
         return;
       }
       if (frame.body) {
@@ -265,14 +269,13 @@ class WebSocketConnection {
       }
       if (frame.trailer) {
         if (frame.trailer.status == "OK") {
-          this._calls.delete(callID);
           stream.end();
         } else if (frame.trailer.status == "ABORT") {
           request.abort(new Error(frame.trailer.message));
         } else if (frame.trailer.status == "ERROR") {
-          this._calls.delete(callID);
           stream.error(new Error(frame.trailer.message));
         }
+        checkCloseCall();
       }
     });
     this.sendMessage({
@@ -298,7 +301,8 @@ class WebSocketConnection {
           callID,
           trailer: { status: "ERROR", message: err.toString() },
         });
-      });
+      })
+      .finally(checkCloseCall);
 
     return stream;
   }
@@ -311,26 +315,29 @@ class WebSocketConnection {
     request: Stream<any>
   ) {
     const future = new Future();
+    const checkCloseCall = () => {
+      if (future.resolved && request.closed) {
+        this._calls.delete(callID);
+      }
+    };
     const callID = this.registerCall((frame) => {
       if (!frame) {
-        this._calls.delete(callID);
         future.reject(new Error("lost connection"));
+        request.abort(new Error("lost connection"));
         return;
       }
       if (frame.body) {
-        this._calls.delete(callID);
         const message = responseDeserializeBinary(frame.body);
         future.resolve(message);
-        return;
       }
       if (frame.trailer) {
         if (frame.trailer.status == "ABORT") {
           request.abort(new Error(frame.trailer.message));
         } else if (frame.trailer.status == "ERROR") {
-          this._calls.delete(callID);
           future.reject(new Error(frame.trailer.message));
         }
       }
+      checkCloseCall();
     });
     this.sendMessage({
       callID,
@@ -355,7 +362,8 @@ class WebSocketConnection {
           callID,
           trailer: { status: "ERROR", message: err.toString() },
         });
-      });
+      })
+      .finally(checkCloseCall);
 
     return future.promise;
   }

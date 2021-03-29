@@ -82,6 +82,8 @@ function pbjsDecodeTypeField(f: protobufjs.Field) {
 
 export function pbjsDecodeType(t: protobuf.Type) {
   return `
+  export function decode(reader:Uint8Array): I${t.name};
+  export function decode(reader:$Reader, length:number): I${t.name};
   export function decode(reader:Uint8Array|$Reader, length?:number): I${t.name}{
     if (!(reader instanceof $Reader))
       reader = $Reader.create(reader);
@@ -183,7 +185,7 @@ export function pbjsEncodeType(t: protobuf.Type) {
 export function pbjsInterfaceType(t: protobuf.Type) {
   return `
   export interface I${t.name} {
-    ${t.fieldsArray.map((f) => `${f.name}: ${toTsType(f)}`).join("\n    ")}
+    ${t.fieldsArray.map((f) => `${f.name}?: ${toTsType(f)}`).join("\n    ")}
   }`;
 }
 

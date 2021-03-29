@@ -27,3 +27,16 @@ message DataFrame {
 
   W.N n = 10;
 }
+
+message Endponit { string url = 1; }
+
+message Channel {}
+
+message Simple {
+  message OK {}
+}
+
+service WS {
+  rpc GetChannel(stream Endponit) returns (stream Channel);
+  rpc pullEvents(Simple.OK) returns (stream Endponit);
+}

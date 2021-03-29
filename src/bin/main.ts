@@ -3,10 +3,10 @@ import { genPackageDefinition } from "./gen";
 
 const args = process.argv.slice(2);
 
-if (args.length >= 1) {
+if (args.length >= 1 && args.length <= 2) {
   let [srcfile, outfile] = args;
   if (!outfile) {
-    outfile = srcfile + ".ts";
+    outfile = srcfile + ".generated.ts";
   }
   genPackageDefinition(srcfile, outfile);
 } else {

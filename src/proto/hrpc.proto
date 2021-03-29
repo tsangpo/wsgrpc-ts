@@ -9,18 +9,22 @@ package hrpc;
 Unary -> Unary
 {header, body} -> {body|trailer}
 (Req): Promise<Res>
+关闭 callid 监听：收到消息
 
 Unary -> Stream
 {header, body} -> {body} ... {trailer}
 (Req): Promise<AsyncIterator<Res>>
+关闭 callid 监听：res 的 stream 结束
 
 Stream -> Unary
 {header} {body} ... {trailer} -> {body|trailer}
 (Stream<Req>): Promise<Res>
+关闭 callid 监听：req 的 stream 结束 并且 res 已结束
 
 Stream -> Stream
 {header} {body} ... {trailer} -> {body} ... {trailer}
 (Stream<Req>): Promise<AsyncIterator<Res>>
+关闭 callid 监听：req 和 res 的 stream 结束
  */
 
 message DataFrame {
@@ -39,17 +43,4 @@ message DataFrame {
   Header header = 2;
   Trailer trailer = 3;
   bytes body = 4;
-}
-
-message Endponit { string url = 1; }
-
-message Channel {}
-
-message Simple {
-  message OK {}
-}
-
-service WS {
-  rpc GetChannel(stream Endponit) returns (stream Channel);
-  rpc pullEvents(Simple.OK) returns (stream Endponit);
 }

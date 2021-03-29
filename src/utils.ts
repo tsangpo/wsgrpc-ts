@@ -1,11 +1,12 @@
 //
 
-export class Future<T> {
+export class Future<T = any> {
   promise: Promise<T>;
   result?: T;
   error: any;
   private _resovle?: (value: T | PromiseLike<T>) => void;
   private _reject?: (reason?: any) => void;
+  private _resolved = false;
 
   constructor() {
     this.promise = new Promise((resolve, reject) => {
@@ -14,17 +15,23 @@ export class Future<T> {
     });
   }
   resolve(result: T) {
+    this._resolved = true;
     this.result = result;
     this._resovle!(result);
   }
   reject(error: any) {
+    this._resolved = true;
     this.error = error;
     this._reject!(error);
   }
+  get resolved() {
+    return this._resolved;
+  }
 }
 
-export class Stream<T> {
+export class Stream<T = any> {
   private readers: { future: Future<any>; onMessage: (o: T) => void }[] = [];
+  private _closed = false;
 
   constructor(private onabort?: (reason: any) => void) {}
 
@@ -37,6 +44,7 @@ export class Stream<T> {
   }
 
   error(e: any) {
+    this._closed = true;
     this.readers.forEach((r) => {
       r.future.reject(e);
     });
@@ -44,10 +52,15 @@ export class Stream<T> {
   }
 
   end() {
+    this._closed = true;
     this.readers.forEach((r) => {
       r.future.resolve(null);
     });
     this.readers = [];
+  }
+
+  get closed() {
+    return this._closed;
   }
 
   // receiver

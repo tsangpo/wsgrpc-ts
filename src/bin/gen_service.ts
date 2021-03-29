@@ -6,7 +6,7 @@ export function genService(t: protobufjs.Service) {
   let meta: string[] = [];
   for (const m of rpcs) {
     meta.push(
-      `${m.method}:[${m.requestSerializer}, ${m.responseDeserializer}, ${m.requestStream}, ${m.responseStream}]`
+      `${m.method}:[${m.requestDeserializer}, ${m.responseSerializer}, ${m.requestStream}, ${m.responseStream}]`
     );
   }
 
@@ -20,8 +20,8 @@ export function genService(t: protobufjs.Service) {
             .join("\n")}
       }
   
-      export class ${t.name} {
-          addToServer(server:any, factory:any){
+      export class ${t.name} implements I${t.name} {
+          addToServer(server:any, factory:(request:any)=>Promise<I${t.name}>){
             server.addService("${t.fullName.substr(1)}", 
                               {${meta.join(", ")}},
                               factory)
@@ -61,6 +61,8 @@ function parseRpc(m: protobufjs.Method) {
     m.responseStream ? "Stream" : "Unary"
   }`;
   const requestSerializer = m.requestType + ".encode";
+  const requestDeserializer = m.requestType + ".decode";
+  const responseSerializer = m.responseType + ".encode";
   const responseDeserializer = m.responseType + ".decode";
 
   return {
@@ -68,7 +70,9 @@ function parseRpc(m: protobufjs.Method) {
     requestType,
     responseType,
     requestSerializer,
+    requestDeserializer,
     responseDeserializer,
+    responseSerializer,
     requestStream: !!m.requestStream,
     responseStream: !!m.responseStream,
     rpcCall,
