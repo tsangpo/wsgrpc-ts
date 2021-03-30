@@ -1,16 +1,6 @@
-// GENERATED CODE -- DO NOT EDIT!
+import { Reader as $Reader, Writer as $Writer } from "protobufjs/minimal";
 
-/* eslint-disable */
-// @ts-nocheck
-
-import {
-  Stream as $Stream,
-  IChannel as $IChannel,
-  Reader as $Reader,
-  Writer as $Writer,
-} from "..";
-
-export namespace hrpc {
+export namespace data {
   export interface IDataFrame {
     callID?: number;
     header?: DataFrame.IHeader;

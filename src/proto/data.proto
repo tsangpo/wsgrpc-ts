@@ -1,7 +1,7 @@
 
 syntax = "proto3";
 
-package hrpc;
+package data;
 
 /**
 四种调用数据包序列

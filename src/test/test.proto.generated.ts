@@ -8,7 +8,7 @@ import {
   IChannel as $IChannel,
   Reader as $Reader,
   Writer as $Writer,
-} from "hrpc";
+} from "wsgrpc";
 
 export namespace test {
   export interface IW {}
@@ -448,6 +448,7 @@ export namespace test {
       return message;
     }
   }
+
   export interface IWS {
     GetChannel(request: $Stream<IEndponit>): Promise<$Stream<IChannel>>;
     pullEvents(request: Simple.IOK): Promise<$Stream<IEndponit>>;

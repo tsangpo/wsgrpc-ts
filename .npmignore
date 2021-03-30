@@ -1,4 +1,8 @@
 src
+lib
+etc
+config
+temp
 .gitignore
 Makefile
 tsconfig.json

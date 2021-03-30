@@ -1,11 +1,11 @@
 {
-  "name": "hrpc-ts",
-  "version": "1.0.0",
+  "name": "wsgrpc",
+  "version": "2.0.0",
   "description": "",
-  "main": "dist/lib.js",
-  "types": "dist/lib.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
-    "hrpc-ts": "dist/bin/main.js"
+    "wsgrpc": "dist/bin.js"
   },
   "scripts": {
     "build": "tsc"
@@ -13,13 +13,14 @@
   "author": "tsangpo <tsangpozheng@gmail.com> (https://github.com/tsangpo/hrpc-ts)",
   "license": "ISC",
   "devDependencies": {
+    "@microsoft/api-extractor": "^7.13.2",
     "@types/node": "^14.14.37",
     "@types/ws": "^7.4.0",
-    "rollup": "^2.43.1",
-    "typescript": "^4.2.3"
+    "typescript": "^4.2.3",
+    "webpack": "^5.28.0",
+    "webpack-cli": "^4.6.0"
   },
   "dependencies": {
-    "node-fetch": "^2.6.1",
     "protobufjs": "^6.10.2",
     "ws": "^7.4.4"
   }
