@@ -7,10 +7,7 @@
   "bin": {
     "wsgrpc": "dist/bin.js"
   },
-  "scripts": {
-    "build": "tsc"
-  },
-  "author": "tsangpo <tsangpozheng@gmail.com> (https://github.com/tsangpo/hrpc-ts)",
+  "author": "tsangpo <tsangpozheng@gmail.com> (https://github.com/tsangpo/wsgrpc)",
   "license": "ISC",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.13.2",
