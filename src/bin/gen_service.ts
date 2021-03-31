@@ -15,7 +15,7 @@ export function genService(t: protobufjs.Service) {
           ${rpcs
             .map(
               ({ method, requestType, responseType }) =>
-                `async ${method}(request:${requestType}): Promise<${responseType}>;`
+                `${method}(request:${requestType}): Promise<${responseType}>;`
             )
             .join("\n")}
       }

@@ -18,7 +18,6 @@ module.exports = {
   },
   output: {
     filename: "lib.js",
-    // path: path.resolve(__dirname, 'dist'),
     path: path.resolve("dist"),
     library: {
       name: "wsgrpc",

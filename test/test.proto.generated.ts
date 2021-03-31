@@ -8,7 +8,7 @@ import {
   IChannel as $IChannel,
   Reader as $Reader,
   Writer as $Writer,
-} from "../dist/lib";
+} from "wsgrpc";
 
 export namespace test {
   export interface IW {}
@@ -97,6 +97,8 @@ export namespace test {
     nnn?: number[];
     n?: W.IN;
     iii?: number;
+    rii?: number[];
+    rss?: string[];
   }
   export namespace DataFrame {
     export interface IHeader {
@@ -240,6 +242,17 @@ export namespace test {
       if (message.iii != null && message.iii != undefined)
         writer.uint32(88).int64(message.iii);
 
+      if (message.rii != null && message.rii.length) {
+        writer.uint32(98).fork();
+        for (let i = 0; i < message.rii.length; ++i)
+          writer.int32(message.rii[i]);
+        writer.ldelim();
+      }
+
+      if (message.rss != null && message.rss.length)
+        for (let i = 0; i < message.rss.length; ++i)
+          writer.uint32(106).string(message.rss[i]);
+
       return end ? writer.finish() : writer;
     }
 
@@ -294,6 +307,25 @@ export namespace test {
 
           case 11:
             message.iii = reader.int64();
+            break;
+
+          // Repeated fields
+          case 12:
+            if (!(message.rii && message.rii.length)) message.rii = [];
+
+            if ((tag & 7) === 2) {
+              let end2 = reader.uint32() + reader.pos;
+              while (reader.pos < end2) message.rii.push(reader.int32());
+            } else message.rii.push(reader.int32());
+
+            break;
+
+          // Repeated fields
+          case 13:
+            if (!(message.rss && message.rss.length)) message.rss = [];
+
+            message.rss.push(string.decode(reader, reader.uint32()));
+
             break;
 
           default:

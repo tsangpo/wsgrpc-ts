@@ -50,15 +50,17 @@ async function main() {
   s.listen(2345);
 
   const stub = new test.WS(new Channel("ws://127.0.0.1:2345/wsgrpc"));
-  const stream = await stub.pullEvents({});
 
-  stream.read((e) => {
-    console.log("sync", e);
-  });
-
-  for await (const e of stream.readToItorator()) {
-    console.log("async", e);
-    // stream.abort("no need");
+  for (let i = 0; i < 1000; i++) {
+    const stream = await stub.pullEvents({});
+    stream.read((e) => {
+      // console.log("sync" + i, e);
+    });
+    for await (const e of stream.readToItorator()) {
+      // console.log("async" + i, e);
+      // stream.abort("no need");
+    }
+    console.log("rpc end " + i);
   }
 }
 main();

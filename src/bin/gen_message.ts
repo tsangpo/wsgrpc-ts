@@ -55,12 +55,16 @@ function pbjsDecodeTypeField(f: protobufjs.Field) {
             } else
                 message.${f.name}.push(reader.${type}());
             `
-          : isGroup
-          ? `
+          : notBasic
+          ? isGroup
+            ? `
             message.${f.name}.push(${type}.decode(reader));
             `
-          : `
+            : `
             message.${f.name}.push(${type}.decode(reader, reader.uint32()));
+            `
+          : `
+            message.${f.name}.push(reader.${f.type}());
             `
       }
       break;

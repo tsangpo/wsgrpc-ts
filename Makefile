@@ -13,6 +13,7 @@ test:
 	# ts-node src/bin/main.ts src/test/test.proto
 	node dist/bin.js test/test.proto
 	ts-node test/main.ts
+	node --inspect -r ts-node/register test/main.ts
 
 publish: build
 	#npm adduser

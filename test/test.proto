@@ -28,6 +28,8 @@ message DataFrame {
   W.N n = 10;
 
   int64 iii = 11;
+  repeated int32 rii = 12;
+  repeated string rss = 13;
 }
 
 message Endponit { string url = 1; }
