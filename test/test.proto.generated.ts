@@ -8,7 +8,7 @@ import {
   IChannel as $IChannel,
   Reader as $Reader,
   Writer as $Writer,
-} from "wsgrpc";
+} from "../dist/lib";
 
 export namespace test {
   export interface IW {}

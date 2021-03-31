@@ -1,2 +1,3 @@
 "use strict";
-module.exports = require("./dist/node");
+global.WebSocket = require("ws");
+module.exports = require("./dist/lib");

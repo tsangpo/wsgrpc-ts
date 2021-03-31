@@ -1,4 +1,3 @@
-import WebSocket from "ws";
 import http from "http";
 import { Stream } from "./utils";
 import { data as pb } from "./proto/data.proto.generated";
@@ -44,6 +43,7 @@ export class Server {
   }
 
   public mountHttpServer(server: http.Server, path: string) {
+    //@ts-ignore
     const wss = new WebSocket.Server({ noServer: true });
     server.on("upgrade", (request, socket, upgradeHead) => {
       if (request.url == path) {
@@ -51,7 +51,8 @@ export class Server {
           request,
           socket,
           upgradeHead,
-          (ws, request) => new Connection(ws, request, this.services)
+          (ws: WebSocket, request: http.IncomingMessage) =>
+            new Connection(ws, request, this.services)
         );
       } else {
         socket.write("HTTP/1.1 404 Not Found\r\n\r\n");

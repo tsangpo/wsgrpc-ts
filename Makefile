@@ -4,9 +4,9 @@ build:
 	npx tsc
 	npx webpack -c config/bin.webpack.js
 	npx webpack -c config/lib.webpack.js
-	npx webpack -c config/lib_node.webpack.js
+	# npx webpack -c config/lib_node.webpack.js
 	npx api-extractor run --local --verbose
-	ts-node src/dev/node-api.ts
+	# ts-node src/dev/node-api.ts
 
 test:
 	# ts-node src/bin/main.ts src/proto/hrpc.proto
