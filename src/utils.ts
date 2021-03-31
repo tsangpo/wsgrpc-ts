@@ -29,34 +29,41 @@ export class Future<T = any> {
   }
 }
 
-export class Stream<T = any> {
-  private readers: { future: Future<any>; onMessage: (o: T) => void }[] = [];
+export interface IStream<T = any> {
+  abort(reason: any): void;
+  read(onMessage: (o: T) => void): Promise<unknown>;
+  readToItorator(): AsyncIterableIterator<T>;
+  writeFromIterator(it: () => AsyncGenerator<T>): void;
+}
+
+export class Stream<T = any> implements IStream {
+  private _readers: { future: Future<any>; onMessage: (o: T) => void }[] = [];
   private _closed = false;
 
-  constructor(private onabort?: (reason: any) => void) {}
+  constructor(private _onabort?: (reason: any) => void) {}
 
   // sender
 
   write(o: T) {
-    this.readers.forEach((r) => {
+    this._readers.forEach((r) => {
       r.onMessage(o);
     });
   }
 
   error(e: any) {
     this._closed = true;
-    this.readers.forEach((r) => {
+    this._readers.forEach((r) => {
       r.future.reject(e);
     });
-    this.readers = [];
+    this._readers = [];
   }
 
   end() {
     this._closed = true;
-    this.readers.forEach((r) => {
+    this._readers.forEach((r) => {
       r.future.resolve(null);
     });
-    this.readers = [];
+    this._readers = [];
   }
 
   get closed() {
@@ -66,22 +73,23 @@ export class Stream<T = any> {
   // receiver
 
   abort(reason: any) {
-    this.onabort && this.onabort(reason);
-    this.readers.forEach((r) => {
+    this._closed = true;
+    this._onabort && this._onabort(reason);
+    this._readers.forEach((r) => {
       // r.future.reject(new Error("aborted"));
       r.future.resolve(null);
     });
-    this.readers = [];
+    this._readers = [];
   }
 
   read(onMessage: (o: T) => void): Promise<unknown> {
     const future = new Future();
     const reader = { future, onMessage };
-    this.readers.push(reader);
+    this._readers.push(reader);
     return future.promise;
   }
 
-  async *readItorator(): AsyncIterableIterator<T> {
+  async *readToItorator(): AsyncIterableIterator<T> {
     const queue: T[] = [];
     let future = new Future<boolean>();
     this.read((o) => {
@@ -100,6 +108,20 @@ export class Stream<T = any> {
       if (await future.promise) {
         return;
       }
+    }
+  }
+
+  async writeFromIterator(it: () => AsyncGenerator<T>) {
+    try {
+      for await (const o of it()) {
+        if (this._closed) {
+          return; //aborted
+        }
+        this.write(o);
+      }
+      this.end();
+    } catch (e) {
+      this.error(e);
     }
   }
 }

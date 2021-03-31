@@ -21,7 +21,8 @@ export function genService(t: protobufjs.Service) {
       }
   
       export class ${t.name} implements I${t.name} {
-          addToServer(server:any, factory:(request:any)=>Promise<I${t.name}>){
+          static addToServer(server: any, 
+                      factory: (request:any)=>Promise<I${t.name}>|I${t.name}) {
             server.addService("${t.fullName.substr(1)}", 
                               {${meta.join(", ")}},
                               factory)
@@ -52,10 +53,10 @@ export function genService(t: protobufjs.Service) {
 function parseRpc(m: protobufjs.Method) {
   const method = m.name;
   const requestType = m.requestStream
-    ? `$Stream<${I(m.requestType)}>`
+    ? `$IStream<${I(m.requestType)}>`
     : I(m.requestType);
   const responseType = m.responseStream
-    ? `$Stream<${I(m.responseType)}>`
+    ? `$IStream<${I(m.responseType)}>`
     : I(m.responseType);
   const rpcCall = `rpc${m.requestStream ? "Stream" : "Unary"}${
     m.responseStream ? "Stream" : "Unary"

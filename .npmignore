@@ -1,7 +1,8 @@
 src
+test
+config
 lib
 etc
-config
 temp
 .gitignore
 Makefile

@@ -46,7 +46,7 @@ export class Server {
   public mountHttpServer(server: http.Server, path: string) {
     const wss = new WebSocket.Server({ noServer: true });
     server.on("upgrade", (request, socket, upgradeHead) => {
-      if (new URL(request.url!).pathname == path) {
+      if (request.url == path) {
         wss.handleUpgrade(
           request,
           socket,
@@ -182,6 +182,7 @@ class Connection {
     const request = rpc.requestDecode(body!);
     const response: Stream = await rpc.exec(request);
     this.registerCall(callID!, (frame) => {
+      // console.debug("rpcUnaryStream.onframe:", { callID, frame });
       if (!frame) {
         response.abort(new Error("lost connection"));
         return;

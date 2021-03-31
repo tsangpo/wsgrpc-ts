@@ -4,11 +4,11 @@
 // @ts-nocheck
 
 import {
-  Stream as $Stream,
+  IStream as $IStream,
   IChannel as $IChannel,
   Reader as $Reader,
   Writer as $Writer,
-} from "wsgrpc";
+} from "../dist/lib";
 
 export namespace test {
   export interface IW {}
@@ -96,6 +96,7 @@ export namespace test {
     body?: Uint8Array;
     nnn?: number[];
     n?: W.IN;
+    iii?: number;
   }
   export namespace DataFrame {
     export interface IHeader {
@@ -235,6 +236,10 @@ export namespace test {
 
       if (message.n != null && message.n != undefined)
         W.N.encode(message.n, writer.uint32(82).fork()).ldelim();
+
+      if (message.iii != null && message.iii != undefined)
+        writer.uint32(88).int64(message.iii);
+
       return end ? writer.finish() : writer;
     }
 
@@ -285,6 +290,10 @@ export namespace test {
 
           case 10:
             message.n = W.N.decode(reader, reader.uint32());
+            break;
+
+          case 11:
+            message.iii = reader.int64();
             break;
 
           default:
@@ -450,12 +459,15 @@ export namespace test {
   }
 
   export interface IWS {
-    GetChannel(request: $Stream<IEndponit>): Promise<$Stream<IChannel>>;
-    pullEvents(request: Simple.IOK): Promise<$Stream<IEndponit>>;
+    GetChannel(request: $IStream<IEndponit>): Promise<$IStream<IChannel>>;
+    pullEvents(request: Simple.IOK): Promise<$IStream<IEndponit>>;
   }
 
   export class WS implements IWS {
-    addToServer(server: any, factory: (request: any) => Promise<IWS>) {
+    static addToServer(
+      server: any,
+      factory: (request: any) => Promise<IWS> | IWS
+    ) {
       server.addService(
         "test.WS",
         {
@@ -468,7 +480,9 @@ export namespace test {
 
     constructor(private channel: $IChannel) {}
 
-    async GetChannel(request: $Stream<IEndponit>): Promise<$Stream<IChannel>> {
+    async GetChannel(
+      request: $IStream<IEndponit>
+    ): Promise<$IStream<IChannel>> {
       return await this.channel.rpcStreamStream(
         "test.WS",
         "GetChannel",
@@ -478,7 +492,7 @@ export namespace test {
       );
     }
 
-    async pullEvents(request: Simple.IOK): Promise<$Stream<IEndponit>> {
+    async pullEvents(request: Simple.IOK): Promise<$IStream<IEndponit>> {
       return await this.channel.rpcUnaryStream(
         "test.WS",
         "pullEvents",

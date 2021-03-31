@@ -234,7 +234,8 @@ class WebSocketConnection {
     responseDeserializeBinary: IDeserializer,
     request: any
   ) {
-    const stream = new Stream((reason: any) => {
+    const response = new Stream((reason: any) => {
+      // console.debug("rpcUnaryStream.sendframe:", { callID, reason });
       this.sendMessage({
         callID,
         trailer: { status: "ABORT", message: reason?.toString() },
@@ -242,19 +243,19 @@ class WebSocketConnection {
     });
     const callID = this.registerCall((frame) => {
       if (!frame) {
-        stream.error(new Error("lost connection"));
+        response.error(new Error("lost connection"));
         return;
       }
       if (frame.body) {
         const message = responseDeserializeBinary(frame.body!);
-        stream.write(message);
+        response.write(message);
       }
       if (frame.trailer) {
         this._calls.delete(callID);
         if (frame.trailer.status == "OK") {
-          stream.end();
+          response.end();
         } else if (frame.trailer.status == "ERROR") {
-          stream.error(new Error(frame.trailer.message));
+          response.error(new Error(frame.trailer.message));
         }
       }
     });
@@ -266,7 +267,7 @@ class WebSocketConnection {
       body,
     });
 
-    return stream;
+    return response;
   }
 
   rpcStreamStream(

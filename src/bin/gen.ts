@@ -31,7 +31,7 @@ export function genPackageDefinition(srcfile: string, outfile: string) {
 /* eslint-disable */
 // @ts-nocheck
   
-import { Stream as $Stream, IChannel as $IChannel, Reader as $Reader, Writer as  $Writer } from "wsgrpc";
+import { IStream as $IStream, IChannel as $IChannel, Reader as $Reader, Writer as  $Writer } from "wsgrpc";
 
 ${root.nestedArray.map(genNested).join("\n")}
 `;
