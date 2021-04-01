@@ -9,13 +9,13 @@ export function genMessage(t: protobufjs.Type, sub = 0): string {
     }
   }
 
-  console.log(
-    t.fieldsArray.map((f) => ({
-      name: f.name,
-      type: f.type,
-      a: f.resolve().resolvedType,
-    }))
-  );
+  // console.log(
+  //   t.fieldsArray.map((f) => ({
+  //     name: f.name,
+  //     type: f.type,
+  //     a: f.resolve().resolvedType,
+  //   }))
+  // );
 
   return `
       ${t.comment ? "/// " + t.comment : ""}

@@ -8,6 +8,7 @@ if (args.length >= 1 && args.length <= 2) {
     outfile = srcfile + ".generated.ts";
   }
   genPackageDefinition(srcfile, outfile);
+  console.log("generated file:", outfile);
 } else {
   console.log(`wsgrpc - rpc using protobuf and websocket protocal
 Usage: wsgrpc $src_file.proto $dist_file.proto.ts
