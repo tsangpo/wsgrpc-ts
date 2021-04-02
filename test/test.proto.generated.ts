@@ -384,7 +384,9 @@ export namespace test {
     }
   }
 
-  export interface IChannel {}
+  export interface IChannel {
+    url?: string;
+  }
   export namespace Channel {
     export function encode(message: IChannel, writer: $Writer): $Writer;
     export function encode(message: IChannel): Uint8Array;
@@ -394,6 +396,9 @@ export namespace test {
     ): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
+
+      if (message.url != null && message.url != undefined)
+        writer.uint32(10).string(message.url);
 
       return end ? writer.finish() : writer;
     }
@@ -411,6 +416,10 @@ export namespace test {
       while (reader.pos < end) {
         let tag = reader.uint32();
         switch (tag >>> 3) {
+          case 1:
+            message.url = reader.string();
+            break;
+
           default:
             reader.skipType(tag & 7);
             break;
@@ -500,10 +509,11 @@ export namespace test {
 
   /** test service */
   export interface IWS {
-    GetChannel(request: $IStream<IEndponit>): Promise<$IStream<IChannel>>;
+    /** return a value */
+    GetEndponit(request: Simple.IOK): Promise<IEndponit>;
 
     /** return a stream */
-    pullEvents(request: Simple.IOK): Promise<$IStream<IEndponit>>;
+    pullEndponits(request: Simple.IOK): Promise<$IStream<IEndponit>>;
   }
 
   export class WS implements IWS {
@@ -514,8 +524,8 @@ export namespace test {
       server.addService(
         "test.WS",
         {
-          GetChannel: [Endponit.decode, Channel.encode, true, true],
-          pullEvents: [Simple.OK.decode, Endponit.encode, false, true],
+          GetEndponit: [Simple.OK.decode, Endponit.encode, false, false],
+          pullEndponits: [Simple.OK.decode, Endponit.encode, false, true],
         },
         factory
       );
@@ -523,22 +533,20 @@ export namespace test {
 
     constructor(private channel: $IChannel) {}
 
-    async GetChannel(
-      request: $IStream<IEndponit>
-    ): Promise<$IStream<IChannel>> {
-      return await this.channel.rpcStreamStream(
+    async GetEndponit(request: Simple.IOK): Promise<IEndponit> {
+      return await this.channel.rpcUnaryUnary(
         "test.WS",
-        "GetChannel",
-        Endponit.encode,
-        Channel.decode,
+        "GetEndponit",
+        Simple.OK.encode,
+        Endponit.decode,
         request
       );
     }
 
-    async pullEvents(request: Simple.IOK): Promise<$IStream<IEndponit>> {
+    async pullEndponits(request: Simple.IOK): Promise<$IStream<IEndponit>> {
       return await this.channel.rpcUnaryStream(
         "test.WS",
-        "pullEvents",
+        "pullEndponits",
         Simple.OK.encode,
         Endponit.decode,
         request

@@ -14,7 +14,7 @@ type IRpc = (
   requestSerializer: ISerializer,
   responseDeserialize: IDeserializer,
   request: any
-) => Promise<any>;
+) => Promise<any> | Stream<any>;
 
 export interface IChannel {
   rpcUnaryUnary: IRpc;
@@ -23,15 +23,26 @@ export interface IChannel {
   rpcStreamUnary: IRpc;
 }
 
+interface IAgent {
+  reset(): void;
+  getConnection(): Promise<IChannel> | IChannel;
+}
+
 export class Channel implements IChannel {
-  connector: WebSocketAgent;
+  agent: IAgent;
 
   constructor(url: string) {
-    this.connector = new WebSocketAgent(url);
+    if (url.startsWith("http:") || url.startsWith("https:")) {
+      this.agent = new HttpAgent(url);
+    } else if (url.startsWith("ws:") || url.startsWith("wss:")) {
+      this.agent = new WebSocketAgent(url);
+    } else {
+      throw new Error("channel url not supported: " + url);
+    }
   }
 
   reset() {
-    this.connector.reset();
+    this.agent.reset();
   }
 
   async rpcUnaryUnary(
@@ -41,7 +52,7 @@ export class Channel implements IChannel {
     responseDeserializeBinary: IDeserializer,
     request: any
   ) {
-    const c = await this.connector.getConnection();
+    const c = await this.agent.getConnection();
     return c.rpcUnaryUnary(
       service,
       method,
@@ -58,7 +69,7 @@ export class Channel implements IChannel {
     responseDeserializeBinary: IDeserializer,
     request: any
   ) {
-    const c = await this.connector.getConnection();
+    const c = await this.agent.getConnection();
     return c.rpcUnaryStream(
       service,
       method,
@@ -75,7 +86,7 @@ export class Channel implements IChannel {
     responseDeserializeBinary: IDeserializer,
     request: any
   ) {
-    const c = await this.connector.getConnection();
+    const c = await this.agent.getConnection();
     return c.rpcStreamStream(
       service,
       method,
@@ -92,7 +103,7 @@ export class Channel implements IChannel {
     responseDeserializeBinary: IDeserializer,
     request: any
   ) {
-    const c = await this.connector.getConnection();
+    const c = await this.agent.getConnection();
     return c.rpcStreamUnary(
       service,
       method,
@@ -103,9 +114,72 @@ export class Channel implements IChannel {
   }
 }
 
+//////////// http /////////////
+
+class HttpAgent implements IAgent {
+  url: string;
+  constructor(url: string) {
+    this.url = url + (url.endsWith("/") ? "" : "/");
+  }
+
+  getConnection() {
+    return this;
+  }
+
+  reset() {}
+
+  async rpcUnaryUnary(
+    service: string,
+    method: string,
+    requestSerializer: ISerializer,
+    responseDeserializeBinary: IDeserializer,
+    request: any
+  ) {
+    const url = this.url + service + "/" + method;
+    const res = await fetch(url, {
+      method: "post",
+      body: JSON.stringify(request),
+      headers: { "Content-Type": "application/json" },
+    });
+    return await res.json();
+  }
+
+  async rpcUnaryStream(
+    service: string,
+    method: string,
+    requestSerializer: ISerializer,
+    responseDeserializeBinary: IDeserializer,
+    request: any
+  ) {
+    throw new Error("method not supported");
+  }
+
+  async rpcStreamStream(
+    service: string,
+    method: string,
+    requestSerializer: ISerializer,
+    responseDeserializeBinary: IDeserializer,
+    request: any
+  ) {
+    throw new Error("method not supported");
+  }
+
+  async rpcStreamUnary(
+    service: string,
+    method: string,
+    requestSerializer: ISerializer,
+    responseDeserializeBinary: IDeserializer,
+    request: any
+  ) {
+    throw new Error("method not supported");
+  }
+}
+
+//////////// WebSocket /////////////
+
 const WebSocket_OPEN = 1;
 
-class WebSocketAgent {
+class WebSocketAgent implements IAgent {
   connectionFuture: Future<WebSocketConnection> | null;
 
   constructor(private url: string) {

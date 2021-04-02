@@ -33,6 +33,17 @@ interface IRpcServer {
 
 export class Server {
   private services: IServiceDirectory = {};
+  private fallbacks: {
+    onrequest?: (
+      request: http.IncomingMessage,
+      response: http.ServerResponse
+    ) => void;
+    onupgrade?: (
+      request: http.IncomingMessage,
+      socket: any,
+      upgradeHead: any
+    ) => void;
+  } = {};
 
   public addService(
     service: string,
@@ -43,34 +54,71 @@ export class Server {
   }
 
   public mountHttpServer(server: http.Server, path: string) {
+    // http
+    const httpHandler = new HttpHandler(path, this.services);
+    server.on(
+      "request",
+      (request: http.IncomingMessage, response: http.ServerResponse) => {
+        if (request.url?.startsWith(path)) {
+          httpHandler.handle(request, response);
+        } else if (this.fallbacks?.onrequest) {
+          this.fallbacks.onrequest(request, response);
+        } else {
+          response.statusCode = 404;
+          response.end();
+        }
+      }
+    );
+
+    // websocket
     //@ts-ignore
     const wss = new WebSocket.Server({ noServer: true });
-    server.on("upgrade", (request, socket, upgradeHead) => {
-      if (request.url == path) {
-        wss.handleUpgrade(
-          request,
-          socket,
-          upgradeHead,
-          (ws: WebSocket, request: http.IncomingMessage) =>
-            new Connection(ws, request, this.services)
-        );
-      } else {
-        socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
-        socket.destroy();
+    server.on(
+      "upgrade",
+      (request: http.IncomingMessage, socket, upgradeHead) => {
+        if (request.url == path) {
+          wss.handleUpgrade(
+            request,
+            socket,
+            upgradeHead,
+            (ws: WebSocket, request: http.IncomingMessage) =>
+              new WebSocketConnection(ws, request, this.services)
+          );
+        } else if (this.fallbacks?.onupgrade) {
+          this.fallbacks.onupgrade(request, socket, upgradeHead);
+        } else {
+          socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+          socket.destroy();
+        }
       }
-    });
+    );
+  }
+
+  public fallback(
+    onrequest?: (
+      request: http.IncomingMessage,
+      response: http.ServerResponse
+    ) => void,
+    onupgrade?: (
+      request: http.IncomingMessage,
+      socket: any,
+      upgradeHead: any
+    ) => void
+  ) {
+    this.fallbacks = { onrequest, onupgrade };
   }
 }
 
 // 独立出来，是因为可不和 ws 绑定，也许可用于其他传输层
 class Caller {
-  private services: { [key: string]: any } = {};
+  private services: { [key: string]: Promise<any> } = {};
   constructor(private serviceDirectory: IServiceDirectory) {}
 
   async getRpc(
     request: http.IncomingMessage,
     service: string,
-    method: string
+    method: string,
+    isolated = false
   ): Promise<IRpcServer> {
     const meta = this.serviceDirectory[service];
     if (!meta) {
@@ -80,13 +128,21 @@ class Caller {
       throw new Error(`method not found: ${service}.${method}`);
     }
 
-    let sp = this.services[service];
-    if (!sp) {
+    let sp: Promise<any>;
+    if (isolated) {
       sp = meta.factory(request);
       if (!sp) {
         throw new Error(`create service error: ${service}.${method}`);
       }
-      this.services[service] = sp;
+    } else {
+      sp = this.services[service];
+      if (!sp) {
+        sp = meta.factory(request);
+        if (!sp) {
+          throw new Error(`create service error: ${service}.${method}`);
+        }
+        this.services[service] = sp;
+      }
     }
     const s = await sp;
 
@@ -111,9 +167,75 @@ class Caller {
   }
 }
 
+class HttpHandler {
+  caller: Caller;
+  pathPrefix: string;
+  constructor(pathPrefix: string, services: IServiceDirectory) {
+    // important!!! don't use node lib so that can compile for browser
+    if (!pathPrefix.endsWith("/")) {
+      pathPrefix += "/";
+    }
+    this.pathPrefix = pathPrefix;
+    this.caller = new Caller(services);
+  }
+
+  async handle(request: http.IncomingMessage, response: http.ServerResponse) {
+    if (request.method != "POST") {
+      throw new Error("http method not supported");
+    }
+    const [service, method] = request
+      .url!.substr(this.pathPrefix.length)
+      .split("/");
+
+    try {
+      const rpc = await this.caller.getRpc(request, service, method, true);
+      if (!rpc.requestStream && !rpc.responseStream) {
+        await this.rpcUnaryUnary(request, response, rpc);
+      } else {
+        response.statusCode = 501;
+        response.end();
+      }
+    } catch (e) {
+      response.statusCode = 500;
+      response.end(e.toString());
+    }
+  }
+
+  readRequestText(request: http.IncomingMessage): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let body: any[] = [];
+      request
+        .on("error", (err) => {
+          reject(err);
+        })
+        .on("data", (chunk) => {
+          body.push(chunk);
+        })
+        .on("end", () => {
+          const result = Buffer.concat(body).toString();
+          resolve(result);
+        });
+    });
+  }
+
+  async rpcUnaryUnary(
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+    rpc: IRpcServer
+  ) {
+    if (req.headers["content-type"] != "application/json") {
+      throw new Error("codec not supported");
+    }
+    const request = JSON.parse(await this.readRequestText(req));
+    const response = await rpc.exec(request);
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify(response));
+  }
+}
+
 type IFrameCallback = (frame: pb.IDataFrame | null) => void;
 
-class Connection {
+class WebSocketConnection {
   _calls = new Map<number, IFrameCallback>();
 
   constructor(

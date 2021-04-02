@@ -16,18 +16,13 @@ console.log(bytes, JSON.stringify(f));
 import { Channel, Server, IStream, Stream } from "../node";
 import http from "http";
 class MyWS implements test.IWS {
-  async GetChannel(
-    request: IStream<test.IEndponit>
-  ): Promise<IStream<test.IChannel>> {
-    const stream = new Stream<test.IChannel>();
-
-    // redis.on('message', ()=>{
-    //   stream.write({});
-    // })
-
-    return stream;
+  async GetEndponit(request: test.Simple.IOK): Promise<test.IEndponit> {
+    return { url: "wss:asdfasdfas" };
   }
-  async pullEvents(request: test.Simple.IOK): Promise<Stream<test.IEndponit>> {
+
+  async pullEndponits(
+    request: test.Simple.IOK
+  ): Promise<Stream<test.IEndponit>> {
     console.log("pull:", request);
     const stream = new Stream<test.IEndponit>((reason) => {
       console.log("on abort", reason.toString());
@@ -47,12 +42,19 @@ async function main() {
 
   const s = http.createServer();
   server.mountHttpServer(s, "/wsgrpc");
+  server.fallback((request, response) => {
+    response.end("hello");
+  });
   s.listen(2345);
+
+  const stubHttp = new test.WS(new Channel("http://127.0.0.1:2345/wsgrpc"));
+  const res1 = await stubHttp.GetEndponit({});
+  console.log("http GetEndponit:", res1);
 
   const stub = new test.WS(new Channel("ws://127.0.0.1:2345/wsgrpc"));
 
   for (let i = 0; i < 1000; i++) {
-    const stream = await stub.pullEvents({});
+    const stream = await stub.pullEndponits({});
     stream.read((e) => {
       // console.log("sync" + i, e);
     });
