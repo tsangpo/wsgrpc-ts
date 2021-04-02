@@ -213,7 +213,7 @@ class WebSocketConnection {
         return;
       }
       if (frame.trailer) {
-        if (frame.trailer.status == "ERROR") {
+        if (frame.trailer.status == pb.DataFrame.Trailer.Status.ERROR) {
           future.reject(new Error(frame.trailer.message));
         }
       }
@@ -238,7 +238,10 @@ class WebSocketConnection {
       // console.debug("rpcUnaryStream.sendframe:", { callID, reason });
       this.sendMessage({
         callID,
-        trailer: { status: "ABORT", message: reason?.toString() },
+        trailer: {
+          status: pb.DataFrame.Trailer.Status.ABORT,
+          message: reason?.toString(),
+        },
       });
     });
     const callID = this.registerCall((frame) => {
@@ -252,9 +255,9 @@ class WebSocketConnection {
       }
       if (frame.trailer) {
         this._calls.delete(callID);
-        if (frame.trailer.status == "OK") {
+        if (frame.trailer.status == pb.DataFrame.Trailer.Status.OK) {
           response.end();
-        } else if (frame.trailer.status == "ERROR") {
+        } else if (frame.trailer.status == pb.DataFrame.Trailer.Status.ERROR) {
           response.error(new Error(frame.trailer.message));
         }
       }
@@ -280,7 +283,10 @@ class WebSocketConnection {
     const stream = new Stream((reason: any) => {
       this.sendMessage({
         callID,
-        trailer: { status: "ABORT", message: reason?.toString() },
+        trailer: {
+          status: pb.DataFrame.Trailer.Status.ABORT,
+          message: reason?.toString(),
+        },
       });
     });
     const checkCloseCall = () => {
@@ -299,11 +305,11 @@ class WebSocketConnection {
         stream.write(message);
       }
       if (frame.trailer) {
-        if (frame.trailer.status == "OK") {
+        if (frame.trailer.status == pb.DataFrame.Trailer.Status.OK) {
           stream.end();
-        } else if (frame.trailer.status == "ABORT") {
+        } else if (frame.trailer.status == pb.DataFrame.Trailer.Status.ABORT) {
           request.abort(new Error(frame.trailer.message));
-        } else if (frame.trailer.status == "ERROR") {
+        } else if (frame.trailer.status == pb.DataFrame.Trailer.Status.ERROR) {
           stream.error(new Error(frame.trailer.message));
         }
         checkCloseCall();
@@ -324,13 +330,16 @@ class WebSocketConnection {
       .then(() => {
         this.sendMessage({
           callID,
-          trailer: { status: "OK" },
+          trailer: { status: pb.DataFrame.Trailer.Status.OK },
         });
       })
       .catch((err) => {
         this.sendMessage({
           callID,
-          trailer: { status: "ERROR", message: err.toString() },
+          trailer: {
+            status: pb.DataFrame.Trailer.Status.ERROR,
+            message: err.toString(),
+          },
         });
       })
       .finally(checkCloseCall);
@@ -362,9 +371,9 @@ class WebSocketConnection {
         future.resolve(message);
       }
       if (frame.trailer) {
-        if (frame.trailer.status == "ABORT") {
+        if (frame.trailer.status == pb.DataFrame.Trailer.Status.ABORT) {
           request.abort(new Error(frame.trailer.message));
-        } else if (frame.trailer.status == "ERROR") {
+        } else if (frame.trailer.status == pb.DataFrame.Trailer.Status.ERROR) {
           future.reject(new Error(frame.trailer.message));
         }
       }
@@ -385,13 +394,16 @@ class WebSocketConnection {
       .then(() => {
         this.sendMessage({
           callID,
-          trailer: { status: "OK" },
+          trailer: { status: pb.DataFrame.Trailer.Status.OK },
         });
       })
       .catch((err) => {
         this.sendMessage({
           callID,
-          trailer: { status: "ERROR", message: err.toString() },
+          trailer: {
+            status: pb.DataFrame.Trailer.Status.ERROR,
+            message: err.toString(),
+          },
         });
       })
       .finally(checkCloseCall);

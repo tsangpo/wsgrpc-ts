@@ -8,18 +8,18 @@ message W {
 }
 
 message DataFrame {
-  // request
+  /// request
   message Header {
     string service = 1;
     string method = 2;
   }
-  // stream end or error message
+  /// stream end or error message
   message Trailer {
     string status = 1;
     string message = 2;
   }
 
-  int32 callID = 1;
+  int32 callID = 1; /// stream id
   Header header = 2;
   repeated Trailer trailer = 3;
   bytes body = 4;
@@ -38,9 +38,17 @@ message Channel {}
 
 message Simple {
   message OK {}
+
+  enum Status {
+    OK = 1;
+    ABOORT = 2;
+    ERROR = 3;
+  }
 }
 
+/// test service
 service WS {
   rpc GetChannel(stream Endponit) returns (stream Channel);
+  /// return a stream
   rpc pullEvents(Simple.OK) returns (stream Endponit);
 }

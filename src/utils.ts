@@ -1,5 +1,3 @@
-//
-
 export class Future<T = any> {
   promise: Promise<T>;
   result?: T;
@@ -31,13 +29,12 @@ export class Future<T = any> {
 
 export interface IStream<T = any> {
   abort(reason: any): void;
-  read(onMessage: (o: T) => void): Promise<unknown>;
+  read(onMessage: (o: T) => void): Promise<void>;
   readToItorator(): AsyncIterableIterator<T>;
-  writeFromIterator(it: () => AsyncGenerator<T>): void;
 }
 
 export class Stream<T = any> implements IStream {
-  private _readers: { future: Future<any>; onMessage: (o: T) => void }[] = [];
+  private _readers: { future: Future<void>; onMessage: (o: T) => void }[] = [];
   private _closed = false;
 
   constructor(private _onabort?: (reason: any) => void) {}
@@ -61,7 +58,7 @@ export class Stream<T = any> implements IStream {
   end() {
     this._closed = true;
     this._readers.forEach((r) => {
-      r.future.resolve(null);
+      r.future.resolve();
     });
     this._readers = [];
   }
@@ -76,13 +73,12 @@ export class Stream<T = any> implements IStream {
     this._closed = true;
     this._onabort && this._onabort(reason);
     this._readers.forEach((r) => {
-      // r.future.reject(new Error("aborted"));
-      r.future.resolve(null);
+      r.future.resolve();
     });
     this._readers = [];
   }
 
-  read(onMessage: (o: T) => void): Promise<unknown> {
+  read(onMessage: (o: T) => void): Promise<void> {
     const future = new Future();
     const reader = { future, onMessage };
     this._readers.push(reader);

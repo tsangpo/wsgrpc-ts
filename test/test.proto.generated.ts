@@ -8,7 +8,7 @@ import {
   IChannel as $IChannel,
   Reader as $Reader,
   Writer as $Writer,
-} from "../dist/lib";
+} from "..";
 
 export namespace test {
   export interface IW {}
@@ -90,7 +90,7 @@ export namespace test {
   }
 
   export interface IDataFrame {
-    callID?: number;
+    callID?: number /** stream id */;
     header?: DataFrame.IHeader;
     trailer?: DataFrame.ITrailer[];
     body?: Uint8Array;
@@ -101,6 +101,7 @@ export namespace test {
     rss?: string[];
   }
   export namespace DataFrame {
+    /** request */
     export interface IHeader {
       service?: string;
       method?: string;
@@ -154,6 +155,7 @@ export namespace test {
       }
     }
 
+    /** stream end or error message */
     export interface ITrailer {
       status?: string;
       message?: string;
@@ -324,7 +326,7 @@ export namespace test {
           case 13:
             if (!(message.rss && message.rss.length)) message.rss = [];
 
-            message.rss.push(string.decode(reader, reader.uint32()));
+            message.rss.push(reader.string());
 
             break;
 
@@ -456,6 +458,12 @@ export namespace test {
       }
     }
 
+    export const Status = {
+      OK: 1,
+      ABOORT: 2,
+      ERROR: 3,
+    };
+
     export function encode(message: ISimple, writer: $Writer): $Writer;
     export function encode(message: ISimple): Uint8Array;
     export function encode(
@@ -490,8 +498,11 @@ export namespace test {
     }
   }
 
+  /** test service */
   export interface IWS {
     GetChannel(request: $IStream<IEndponit>): Promise<$IStream<IChannel>>;
+
+    /** return a stream */
     pullEvents(request: Simple.IOK): Promise<$IStream<IEndponit>>;
   }
 

@@ -1,5 +1,5 @@
 import protobufjs from "protobufjs/minimal";
-import { I } from "./types";
+import { C, I } from "./types";
 
 export function genService(t: protobufjs.Service) {
   let rpcs = t.methodsArray.map(parseRpc);
@@ -11,11 +11,14 @@ export function genService(t: protobufjs.Service) {
   }
 
   return `
+      ${C(t.comment)}
       export interface I${t.name} {
           ${rpcs
             .map(
-              ({ method, requestType, responseType }) =>
-                `${method}(request:${requestType}): Promise<${responseType}>;`
+              ({ comment, method, requestType, responseType }) =>
+                `
+                ${C(comment)}
+                ${method}(request:${requestType}): Promise<${responseType}>;`
             )
             .join("\n")}
       }
@@ -39,6 +42,7 @@ export function genService(t: protobufjs.Service) {
                 rpcCall,
                 requestSerializer,
                 responseDeserializer,
+                comment,
               }) => `
           async ${method}(request:${requestType}): Promise<${responseType}> {
               return await this.channel.${rpcCall}("${t.fullName.substr(
@@ -77,5 +81,6 @@ function parseRpc(m: protobufjs.Method) {
     requestStream: !!m.requestStream,
     responseStream: !!m.responseStream,
     rpcCall,
+    comment: m.comment,
   };
 }

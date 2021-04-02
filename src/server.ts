@@ -147,7 +147,10 @@ class Connection {
         } catch (e) {
           this.sendMessage({
             callID: frame.callID,
-            trailer: { status: "ERROR", message: e.toString() },
+            trailer: {
+              status: pb.DataFrame.Trailer.Status.ERROR,
+              message: e.toString(),
+            },
           });
         }
       }
@@ -189,7 +192,7 @@ class Connection {
         return;
       }
       if (frame.trailer) {
-        if (frame.trailer.status == "ABORT") {
+        if (frame.trailer.status == pb.DataFrame.Trailer.Status.ABORT) {
           response.abort(new Error(frame.trailer.message));
         }
       }
@@ -204,13 +207,16 @@ class Connection {
       .then(() => {
         this.sendMessage({
           callID,
-          trailer: { status: "OK" },
+          trailer: { status: pb.DataFrame.Trailer.Status.OK },
         });
       })
       .catch((e) => {
         this.sendMessage({
           callID,
-          trailer: { status: "ERROR", message: e.toString() },
+          trailer: {
+            status: pb.DataFrame.Trailer.Status.ERROR,
+            message: e.toString(),
+          },
         });
       })
       .finally(() => {
@@ -222,7 +228,10 @@ class Connection {
     const request = new Stream((e) => {
       this.sendMessage({
         callID,
-        trailer: { status: "ABORT", message: e?.toString() },
+        trailer: {
+          status: pb.DataFrame.Trailer.Status.ABORT,
+          message: e?.toString(),
+        },
       });
     });
     const response: Stream = await rpc.exec(request);
@@ -242,11 +251,11 @@ class Connection {
         request.write(message);
       }
       if (frame.trailer) {
-        if (frame.trailer.status == "OK") {
+        if (frame.trailer.status == pb.DataFrame.Trailer.Status.OK) {
           request.end();
-        } else if (frame.trailer.status == "ERROR") {
+        } else if (frame.trailer.status == pb.DataFrame.Trailer.Status.ERROR) {
           request.error(new Error(frame.trailer.message));
-        } else if (frame.trailer.status == "ABORT") {
+        } else if (frame.trailer.status == pb.DataFrame.Trailer.Status.ABORT) {
           response.abort(new Error(frame.trailer.message));
         }
         checkCloseCall();
@@ -262,13 +271,16 @@ class Connection {
       .then(() => {
         this.sendMessage({
           callID,
-          trailer: { status: "OK" },
+          trailer: { status: pb.DataFrame.Trailer.Status.OK },
         });
       })
       .catch((e) => {
         this.sendMessage({
           callID,
-          trailer: { status: "ERROR", message: e.toString() },
+          trailer: {
+            status: pb.DataFrame.Trailer.Status.ERROR,
+            message: e.toString(),
+          },
         });
       })
       .finally(checkCloseCall);
@@ -278,7 +290,10 @@ class Connection {
     const request = new Stream((e) => {
       this.sendMessage({
         callID,
-        trailer: { status: "ABORT", message: e?.toString() },
+        trailer: {
+          status: pb.DataFrame.Trailer.Status.ABORT,
+          message: e?.toString(),
+        },
       });
     });
 
@@ -291,9 +306,9 @@ class Connection {
         request.write(message);
       }
       if (frame.trailer) {
-        if (frame.trailer.status == "OK") {
+        if (frame.trailer.status == pb.DataFrame.Trailer.Status.OK) {
           request.end();
-        } else if (frame.trailer.status == "ERROR") {
+        } else if (frame.trailer.status == pb.DataFrame.Trailer.Status.ERROR) {
           request.error(new Error(frame.trailer.message));
         }
         this._calls.delete(callID!);

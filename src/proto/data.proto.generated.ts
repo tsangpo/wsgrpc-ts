@@ -62,10 +62,17 @@ export namespace data {
     }
 
     export interface ITrailer {
-      status?: string;
+      status?: number;
       message?: string;
     }
     export namespace Trailer {
+      export const Status = {
+        UNKNOWN: 0,
+        OK: 1,
+        ERROR: 2,
+        ABORT: 3,
+      };
+
       export function encode(message: ITrailer, writer: $Writer): $Writer;
       export function encode(message: ITrailer): Uint8Array;
       export function encode(
@@ -76,7 +83,7 @@ export namespace data {
         if (!writer) writer = $Writer.create();
 
         if (message.status != null && message.status != undefined)
-          writer.uint32(10).string(message.status);
+          writer.uint32(8).int32(message.status);
 
         if (message.message != null && message.message != undefined)
           writer.uint32(18).string(message.message);
@@ -98,7 +105,7 @@ export namespace data {
           let tag = reader.uint32();
           switch (tag >>> 3) {
             case 1:
-              message.status = reader.string();
+              message.status = reader.int32();
               break;
 
             case 2:

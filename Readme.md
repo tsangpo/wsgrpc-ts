@@ -23,5 +23,13 @@ see example file: "test/main.ts"
 protobuf suport:
 
 - [Y] repeated
+- [Y] enum
 - [N] map
-- [N] enum
+
+# TODO
+
+- use json codec and http post protocal
+
+## Notes
+
+- compile generated ts file to js and d.ts files

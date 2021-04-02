@@ -1,4 +1,4 @@
-import { genPackageDefinition } from "./gen";
+import { genPackage } from "./gen_proto";
 
 const args = process.argv.slice(2);
 
@@ -7,7 +7,7 @@ if (args.length >= 1 && args.length <= 2) {
   if (!outfile) {
     outfile = srcfile + ".generated.ts";
   }
-  genPackageDefinition(srcfile, outfile);
+  genPackage(srcfile, outfile);
   console.log("generated file:", outfile);
 } else {
   console.log(`wsgrpc - rpc using protobuf and websocket protocal

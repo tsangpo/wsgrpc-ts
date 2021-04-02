@@ -1,27 +1,12 @@
 import protobufjs, { types } from "protobufjs/minimal";
-import { I } from "./types";
+import { genNested } from "./gen_nested";
+import { C, I } from "./types";
 
-export function genMessage(t: protobufjs.Type, sub = 0): string {
-  let subs = [];
-  for (const c of t.nestedArray) {
-    if (c instanceof protobufjs.Type) {
-      subs.push(genMessage(c, sub + 1));
-    }
-  }
-
-  // console.log(
-  //   t.fieldsArray.map((f) => ({
-  //     name: f.name,
-  //     type: f.type,
-  //     a: f.resolve().resolvedType,
-  //   }))
-  // );
-
+export function genMessage(t: protobufjs.Type): string {
   return `
-      ${t.comment ? "/// " + t.comment : ""}
       ${pbjsInterfaceType(t)}
       export namespace ${t.name} {
-          ${subs.join("\n")}
+          ${t.nestedArray.map(genNested).join("\n")}
 
           ${pbjsEncodeType(t)}
           ${pbjsDecodeType(t)}
@@ -35,9 +20,10 @@ export function genMessage(t: protobufjs.Type, sub = 0): string {
 function pbjsDecodeTypeField(f: protobufjs.Field) {
   const t = f.resolve().resolvedType;
   const type = t instanceof protobufjs.Enum ? "int32" : f.type;
-  const notBasic = (types.basic as any)[f.type] === undefined;
   const isGroup = t && (t as any).group;
-  const isPacked = (types.packed as any)[f.type] !== undefined;
+  const isPackedType = (types.packed as any)[type] !== undefined;
+  const wireType = (types.basic as any)[type];
+  const isBasic = wireType !== undefined;
 
   if (f.repeated) {
     return `
@@ -46,7 +32,7 @@ function pbjsDecodeTypeField(f: protobufjs.Field) {
       if (!(message.${f.name} && message.${f.name}.length))
         message.${f.name} = [];
       ${
-        isPacked
+        isPackedType
           ? `
             if ((tag & 7) === 2) {
               let end2 = reader.uint32() + reader.pos;
@@ -55,16 +41,16 @@ function pbjsDecodeTypeField(f: protobufjs.Field) {
             } else
                 message.${f.name}.push(reader.${type}());
             `
-          : notBasic
-          ? isGroup
-            ? `
+          : isBasic
+          ? `
+          message.${f.name}.push(reader.${type}());
+          `
+          : isGroup
+          ? `
             message.${f.name}.push(${type}.decode(reader));
             `
-            : `
-            message.${f.name}.push(${type}.decode(reader, reader.uint32()));
-            `
           : `
-            message.${f.name}.push(reader.${f.type}());
+            message.${f.name}.push(${type}.decode(reader, reader.uint32()));
             `
       }
       break;
@@ -74,11 +60,11 @@ function pbjsDecodeTypeField(f: protobufjs.Field) {
   return `
     case ${f.id}:
         ${
-          notBasic
-            ? isGroup
-              ? `message.${f.name} = ${f.type}.decode(reader);`
-              : `message.${f.name} = ${f.type}.decode(reader, reader.uint32());`
-            : `message.${f.name} = reader.${f.type}();`
+          isBasic
+            ? `message.${f.name} = reader.${type}();`
+            : isGroup
+            ? `message.${f.name} = ${type}.decode(reader);`
+            : `message.${f.name} = ${type}.decode(reader, reader.uint32());`
         }
         break;
     `;
@@ -114,10 +100,10 @@ export function pbjsDecodeType(t: protobuf.Type) {
 function pbjsEncodeTypeField(f: protobuf.Field) {
   const t = f.resolve().resolvedType;
   const type = t instanceof protobufjs.Enum ? "int32" : f.type;
-  const notBasic = (types.basic as any)[f.type] === undefined;
   const isGroup = t && (t as any).group;
-  const isPackedType = (types.packed as any)[f.type] !== undefined;
+  const isPackedType = (types.packed as any)[type] !== undefined;
   const wireType = (types.basic as any)[type];
+  const isBasic = wireType !== undefined;
 
   if (f.repeated) {
     if (f.packed && isPackedType) {
@@ -125,10 +111,18 @@ function pbjsEncodeTypeField(f: protobuf.Field) {
         if (message.${f.name} != null && message.${f.name}.length) {
           writer.uint32(${((f.id << 3) | 2) >>> 0}).fork();
           for (let i = 0; i < message.${f.name}.length; ++i)
-              writer.${f.type}(message.${f.name}[i]);
+              writer.${type}(message.${f.name}[i]);
           writer.ldelim();
         }`;
-    } else if (wireType === undefined) {
+    } else if (isBasic) {
+      //("w.uint32(%i).%s(%s[i])", (field.id << 3 | wireType) >>> 0, type, ref);
+      const tag = ((f.id << 3) | wireType) >>> 0;
+      return `
+        if (message.${f.name} != null && message.${f.name}.length)
+          for (let i = 0; i < message.${f.name}.length; ++i)
+            writer.uint32(${tag}).${type}(message.${f.name}[i]);
+        `;
+    } else {
       const tag2 = ((f.id << 3) | 2) >>> 0;
       const tag3 = ((f.id << 3) | 3) >>> 0;
       const tag4 = ((f.id << 3) | 4) >>> 0;
@@ -137,21 +131,19 @@ function pbjsEncodeTypeField(f: protobuf.Field) {
           for (let i = 0; i < message.${f.name}.length; ++i)
             ${
               isGroup
-                ? `${f.type}.encode(message.${f.name}[i], writer.uint32(${tag3})).uint32(${tag4});`
-                : `${f.type}.encode(message.${f.name}[i], writer.uint32(${tag2}).fork()).ldelim();`
+                ? `${type}.encode(message.${f.name}[i], writer.uint32(${tag3})).uint32(${tag4});`
+                : `${type}.encode(message.${f.name}[i], writer.uint32(${tag2}).fork()).ldelim();`
             }`;
-    } else {
-      //("w.uint32(%i).%s(%s[i])", (field.id << 3 | wireType) >>> 0, type, ref);
-      const tag = ((f.id << 3) | wireType) >>> 0;
-      return `
-        if (message.${f.name} != null && message.${f.name}.length)
-          for (let i = 0; i < message.${f.name}.length; ++i)
-            writer.uint32(${tag}).${type}(message.${f.name}[i]);
-        `;
     }
   }
 
-  if (wireType === undefined) {
+  if (isBasic) {
+    const tag = ((f.id << 3) | wireType) >>> 0;
+    return `
+        if (message.${f.name} != null && message.${f.name} != undefined)
+          writer.uint32(${tag}).${type}(message.${f.name});
+        `;
+  } else {
     const tag2 = ((f.id << 3) | 2) >>> 0;
     const tag3 = ((f.id << 3) | 3) >>> 0;
     const tag4 = ((f.id << 3) | 4) >>> 0;
@@ -159,15 +151,9 @@ function pbjsEncodeTypeField(f: protobuf.Field) {
         if (message.${f.name} != null && message.${f.name} != undefined)
           ${
             isGroup
-              ? `${f.type}.encode(message.${f.name}, writer.uint32(${tag3})).uint32(${tag4});`
-              : `${f.type}.encode(message.${f.name}, writer.uint32(${tag2}).fork()).ldelim();`
+              ? `${type}.encode(message.${f.name}, writer.uint32(${tag3})).uint32(${tag4});`
+              : `${type}.encode(message.${f.name}, writer.uint32(${tag2}).fork()).ldelim();`
           }`;
-  } else {
-    const tag = ((f.id << 3) | wireType) >>> 0;
-    return `
-        if (message.${f.name} != null && message.${f.name} != undefined)
-          writer.uint32(${tag}).${f.type}(message.${f.name});
-        `;
   }
 }
 
@@ -188,8 +174,11 @@ export function pbjsEncodeType(t: protobuf.Type) {
 
 export function pbjsInterfaceType(t: protobuf.Type) {
   return `
+  ${C(t.comment)}
   export interface I${t.name} {
-    ${t.fieldsArray.map((f) => `${f.name}?: ${toTsType(f)}`).join("\n    ")}
+    ${t.fieldsArray
+      .map((f) => `${f.name}?: ${toTsType(f)} ${C(f.comment)}`)
+      .join("\n    ")}
   }`;
 }
 
@@ -246,7 +235,12 @@ function toTsType(field: protobuf.Field) {
       type = "Uint8Array";
       break;
     default:
-      type = toTsTypeInterface(field);
+      const t = field.resolve().resolvedType;
+      if (t instanceof protobufjs.Enum) {
+        type = "number";
+      } else {
+        type = toTsTypeInterface(field);
+      }
       break;
   }
   if (field.map) return "{[key:string]:" + type + "}";

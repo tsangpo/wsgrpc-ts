@@ -35,7 +35,13 @@ message DataFrame {
   }
   // stream end or error message
   message Trailer {
-    string status = 1;
+    enum Status {
+      UNKNOWN = 0;
+      OK = 1;
+      ERROR = 2;
+      ABORT = 3;
+    }
+    Status status = 1;
     string message = 2;
   }
 

@@ -3,3 +3,11 @@ export function I(name: string) {
   ss.push("I" + ss.pop());
   return ss.join(".");
 }
+
+export function C(c: string | null) {
+  if (c) {
+    return "/** " + c + " */";
+  } else {
+    return "";
+  }
+}
