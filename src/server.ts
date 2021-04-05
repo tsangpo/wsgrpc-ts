@@ -180,6 +180,10 @@ class HttpHandler {
   }
 
   async handle(request: http.IncomingMessage, response: http.ServerResponse) {
+    if (request.method == "OPTIONS") {
+      this._corsOptions(request, response);
+      return;
+    }
     if (request.method != "POST") {
       throw new Error("http method not supported");
     }
@@ -201,7 +205,35 @@ class HttpHandler {
     }
   }
 
-  readRequestText(request: http.IncomingMessage): Promise<string> {
+  _corsOptions(req: http.IncomingMessage, res: http.ServerResponse) {
+    const requestOrigin = req.headers["origin"];
+    if (!requestOrigin) {
+      res.writeHead(400);
+      res.end("no header: Origin");
+      return;
+    }
+
+    if (!req.headers["access-control-request-method"]) {
+      res.writeHead(400);
+      res.end("no header: Access-Control-Request-Method");
+      return;
+    }
+
+    let allowHeaders = req.headers["access-control-request-headers"];
+    if (!allowHeaders) {
+      allowHeaders = "Authentication";
+    }
+
+    res.writeHead(204, {
+      "Access-Control-Allow-Origin": requestOrigin,
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Allow-Methods": "POST",
+      "Access-Control-Allow-Headers": allowHeaders,
+    });
+    res.end();
+  }
+
+  _readRequestText(request: http.IncomingMessage): Promise<string> {
     return new Promise((resolve, reject) => {
       let body: any[] = [];
       request
@@ -226,7 +258,7 @@ class HttpHandler {
     if (req.headers["content-type"] != "application/json") {
       throw new Error("codec not supported");
     }
-    const request = JSON.parse(await this.readRequestText(req));
+    const request = JSON.parse(await this._readRequestText(req));
     const response = await rpc.exec(request);
     res.setHeader("content-type", "application/json");
     res.end(JSON.stringify(response));
