@@ -8,19 +8,19 @@ export type IDeserializer = (bytes: Uint8Array) => any;
 
 ///////////////// client /////////////////////
 
-type IRpc = (
+type IRpc<T> = (
   service: string,
   method: string,
   requestSerializer: ISerializer,
   responseDeserialize: IDeserializer,
   request: any
-) => Promise<any> | Stream<any>;
+) => T | Promise<T>;
 
 export interface IChannel {
-  rpcUnaryUnary: IRpc;
-  rpcUnaryStream: IRpc;
-  rpcStreamStream: IRpc;
-  rpcStreamUnary: IRpc;
+  rpcUnaryUnary: IRpc<Promise<any>>;
+  rpcUnaryStream: IRpc<Stream<any>>;
+  rpcStreamStream: IRpc<Stream<any>>;
+  rpcStreamUnary: IRpc<Promise<any>>;
 }
 
 interface IAgent {
@@ -31,7 +31,10 @@ interface IAgent {
 export class Channel implements IChannel {
   agent: IAgent;
 
-  constructor(url: string) {
+  constructor(
+    url: string,
+    private callback?: (req: any, res?: any, err?: any) => void
+  ) {
     if (url.startsWith("http:") || url.startsWith("https:")) {
       this.agent = new HttpAgent(url);
     } else if (url.startsWith("ws:") || url.startsWith("wss:")) {
@@ -53,13 +56,24 @@ export class Channel implements IChannel {
     request: any
   ) {
     const c = await this.agent.getConnection();
-    return c.rpcUnaryUnary(
-      service,
-      method,
-      requestSerializer,
-      responseDeserializeBinary,
-      request
-    );
+    return c
+      .rpcUnaryUnary(
+        service,
+        method,
+        requestSerializer,
+        responseDeserializeBinary,
+        request
+      )
+      .then(
+        (res: any) => {
+          this.callback && this.callback(request, res);
+          return res;
+        },
+        (err) => {
+          this.callback && this.callback(request, null, err);
+          throw err;
+        }
+      );
   }
 
   async rpcUnaryStream(
@@ -104,13 +118,24 @@ export class Channel implements IChannel {
     request: any
   ) {
     const c = await this.agent.getConnection();
-    return c.rpcStreamUnary(
-      service,
-      method,
-      requestSerializer,
-      responseDeserializeBinary,
-      request
-    );
+    return c
+      .rpcStreamUnary(
+        service,
+        method,
+        requestSerializer,
+        responseDeserializeBinary,
+        request
+      )
+      .then(
+        (res: any) => {
+          this.callback && this.callback(request, res);
+          return res;
+        },
+        (err) => {
+          this.callback && this.callback(request, null, err);
+          throw err;
+        }
+      );
   }
 }
 
@@ -144,33 +169,33 @@ class HttpAgent implements IAgent {
     return await res.json();
   }
 
-  async rpcUnaryStream(
+  rpcUnaryStream(
     service: string,
     method: string,
     requestSerializer: ISerializer,
     responseDeserializeBinary: IDeserializer,
     request: any
-  ) {
+  ): Stream<any> {
     throw new Error("method not supported");
   }
 
-  async rpcStreamStream(
+  rpcStreamStream(
     service: string,
     method: string,
     requestSerializer: ISerializer,
     responseDeserializeBinary: IDeserializer,
     request: any
-  ) {
+  ): Stream<any> {
     throw new Error("method not supported");
   }
 
-  async rpcStreamUnary(
+  rpcStreamUnary(
     service: string,
     method: string,
     requestSerializer: ISerializer,
     responseDeserializeBinary: IDeserializer,
     request: any
-  ) {
+  ): Promise<any> {
     throw new Error("method not supported");
   }
 }
@@ -187,8 +212,13 @@ class WebSocketAgent implements IAgent {
   }
 
   public async getConnection() {
-    if (this.connectionFuture?.result) {
-      if (this.connectionFuture.result.ws.readyState != WebSocket_OPEN) {
+    if (this.connectionFuture?.resolved) {
+      if (this.connectionFuture.result) {
+        if (this.connectionFuture.result.ws.readyState != WebSocket_OPEN) {
+          this.connectionFuture = null;
+        }
+      } else {
+        // error
         this.connectionFuture = null;
       }
     }
@@ -204,10 +234,7 @@ class WebSocketAgent implements IAgent {
       };
       this.connectionFuture = future;
     }
-    if (!this.connectionFuture.result) {
-      await this.connectionFuture.promise;
-    }
-    return this.connectionFuture.result!;
+    return await this.connectionFuture.promise;
   }
 
   reset() {
