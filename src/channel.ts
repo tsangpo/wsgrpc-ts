@@ -29,23 +29,29 @@ interface IAgent {
 }
 
 export class Channel implements IChannel {
-  agent: IAgent;
+  agent!: IAgent;
 
   constructor(
     url: string,
     private callback?: (req: any, res?: any, err?: any) => void
   ) {
-    if (url.startsWith("http:") || url.startsWith("https:")) {
-      this.agent = new HttpAgent(url);
-    } else if (url.startsWith("ws:") || url.startsWith("wss:")) {
-      this.agent = new WebSocketAgent(url);
-    } else {
-      throw new Error("channel url not supported: " + url);
+    if (!url) {
+      throw new Error("no url provided.");
     }
+    this.reset(url);
   }
 
-  reset() {
-    this.agent.reset();
+  reset(url?: string) {
+    this.agent?.reset();
+    if (url) {
+      if (url.startsWith("http:") || url.startsWith("https:")) {
+        this.agent = new HttpAgent(url);
+      } else if (url.startsWith("ws:") || url.startsWith("wss:")) {
+        this.agent = new WebSocketAgent(url);
+      } else {
+        throw new Error("channel url not supported: " + url);
+      }
+    }
   }
 
   async rpcUnaryUnary(
@@ -69,7 +75,7 @@ export class Channel implements IChannel {
           this.callback && this.callback(request, res);
           return res;
         },
-        (err) => {
+        (err: any) => {
           this.callback && this.callback(request, null, err);
           throw err;
         }
@@ -131,7 +137,7 @@ export class Channel implements IChannel {
           this.callback && this.callback(request, res);
           return res;
         },
-        (err) => {
+        (err: any) => {
           this.callback && this.callback(request, null, err);
           throw err;
         }

@@ -134,13 +134,13 @@ export namespace data {
         writer.uint32(8).int32(message.callID);
 
       if (message.header != null && message.header != undefined)
-        Header.encode(message.header, writer.uint32(18).fork()).ldelim();
+        Header.encode(message.header, writer.uint32(58).fork()).ldelim();
 
       if (message.trailer != null && message.trailer != undefined)
-        Trailer.encode(message.trailer, writer.uint32(26).fork()).ldelim();
+        Trailer.encode(message.trailer, writer.uint32(66).fork()).ldelim();
 
       if (message.body != null && message.body != undefined)
-        writer.uint32(34).bytes(message.body);
+        writer.uint32(74).bytes(message.body);
 
       return end ? writer.finish() : writer;
     }
@@ -162,15 +162,15 @@ export namespace data {
             message.callID = reader.int32();
             break;
 
-          case 2:
+          case 7:
             message.header = Header.decode(reader, reader.uint32());
             break;
 
-          case 3:
+          case 8:
             message.trailer = Trailer.decode(reader, reader.uint32());
             break;
 
-          case 4:
+          case 9:
             message.body = reader.bytes();
             break;
 

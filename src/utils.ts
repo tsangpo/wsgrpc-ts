@@ -1,3 +1,6 @@
+export function lcFirst(name: string) {
+  return name[0].toLowerCase() + name.substr(1);
+}
 export class Future<T = any> {
   promise: Promise<T>;
   result?: T;

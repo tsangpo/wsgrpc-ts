@@ -1,4 +1,5 @@
 import protobufjs from "protobufjs/minimal";
+import { lcFirst } from "../utils";
 import { C, I } from "./types";
 
 export function genService(t: protobufjs.Service) {
@@ -55,7 +56,7 @@ export function genService(t: protobufjs.Service) {
 }
 
 function parseRpc(m: protobufjs.Method) {
-  const method = m.name;
+  let method = m.name;
   const requestType = m.requestStream
     ? `$IStream<${I(m.requestType)}>`
     : I(m.requestType);
@@ -70,6 +71,7 @@ function parseRpc(m: protobufjs.Method) {
   const responseSerializer = m.responseType + ".encode";
   const responseDeserializer = m.responseType + ".decode";
 
+  method = lcFirst(method); // NOTE: lcFirst
   return {
     method,
     requestType,

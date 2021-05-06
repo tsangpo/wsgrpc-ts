@@ -46,7 +46,7 @@ message DataFrame {
   }
 
   int32 callID = 1;
-  Header header = 2;
-  Trailer trailer = 3;
-  bytes body = 4;
+  Header header = 7;
+  Trailer trailer = 8;
+  bytes body = 9;
 }

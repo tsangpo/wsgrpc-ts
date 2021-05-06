@@ -6,4 +6,6 @@ declare global {
     }
   }
 }
-export * from "./dist/lib";
+global.WebSocket = require("ws");
+global.fetch = require("node-fetch");
+export * from "./src/index";
