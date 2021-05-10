@@ -408,6 +408,7 @@ class WebSocketConnection {
     this.sendMessage({
       callID,
       body: rpc.responseEncode(response),
+      trailer: { status: pb.DataFrame.Trailer.Status.OK },
     });
   }
 
@@ -550,6 +551,7 @@ class WebSocketConnection {
     this.sendMessage({
       callID,
       body: rpc.responseEncode(response),
+      trailer: { status: pb.DataFrame.Trailer.Status.OK },
     });
   }
 }
