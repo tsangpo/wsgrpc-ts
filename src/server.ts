@@ -54,7 +54,7 @@ export class Server {
     this.services[service] = { rpcs, factory };
   }
 
-  public mountHttpServer(server: http.Server, path: string) {
+  public listenHttpServerRequest(server: http.Server, path: string) {
     // http
     const httpHandler = new HttpHandler(path, this.services);
     server.on(
@@ -70,7 +70,9 @@ export class Server {
         }
       }
     );
+  }
 
+  public listenHttpServerUpgrade(server: http.Server, path: string) {
     // websocket
     //@ts-ignore
     const wss = new WebSocket.Server({ noServer: true });
@@ -357,7 +359,7 @@ class WebSocketConnection {
           } else if (!rpc.requestStream && rpc.responseStream) {
             await this.rpcUnaryStream(frame, rpc);
           } else if (rpc.requestStream && !rpc.responseStream) {
-            await this.rpcStreamStream(frame, rpc);
+            await this.rpcStreamUnary(frame, rpc);
           } else if (rpc.requestStream && rpc.responseStream) {
             await this.rpcStreamStream(frame, rpc);
           }
@@ -524,7 +526,9 @@ class WebSocketConnection {
       });
     });
 
+    console.log("rpcStreamUnary:", callID);
     this.registerCall(callID!, (frame) => {
+      console.log("request:", frame);
       if (!frame) {
         return;
       }

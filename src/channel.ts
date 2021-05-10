@@ -1,4 +1,4 @@
-import { Future, Stream } from "./utils";
+import { Future, IStream, Stream } from "./utils";
 import { data as pb } from "./proto/data.proto.generated";
 
 ///////////////// message /////////////////////
@@ -14,13 +14,13 @@ type IRpc<T> = (
   requestSerializer: ISerializer,
   responseDeserialize: IDeserializer,
   request: any
-) => T | Promise<T>;
+) => Promise<T>;
 
 export interface IChannel {
-  rpcUnaryUnary: IRpc<Promise<any>>;
-  rpcUnaryStream: IRpc<Stream<any>>;
-  rpcStreamStream: IRpc<Stream<any>>;
-  rpcStreamUnary: IRpc<Promise<any>>;
+  rpcUnaryUnary: IRpc<any>;
+  rpcUnaryStream: IRpc<IStream<any>>;
+  rpcStreamStream: IRpc<IStream<any>>;
+  rpcStreamUnary: IRpc<any>;
 }
 
 interface IAgent {
@@ -62,7 +62,7 @@ export class Channel implements IChannel {
     request: any
   ) {
     const c = await this.agent.getConnection();
-    return c
+    return await c
       .rpcUnaryUnary(
         service,
         method,
@@ -88,9 +88,9 @@ export class Channel implements IChannel {
     requestSerializer: ISerializer,
     responseDeserializeBinary: IDeserializer,
     request: any
-  ) {
+  ): Promise<IStream<any>> {
     const c = await this.agent.getConnection();
-    return c.rpcUnaryStream(
+    return await c.rpcUnaryStream(
       service,
       method,
       requestSerializer,
@@ -105,9 +105,9 @@ export class Channel implements IChannel {
     requestSerializer: ISerializer,
     responseDeserializeBinary: IDeserializer,
     request: any
-  ) {
+  ): Promise<IStream<any>> {
     const c = await this.agent.getConnection();
-    return c.rpcStreamStream(
+    return await c.rpcStreamStream(
       service,
       method,
       requestSerializer,
@@ -124,7 +124,7 @@ export class Channel implements IChannel {
     request: any
   ) {
     const c = await this.agent.getConnection();
-    return c
+    return await c
       .rpcStreamUnary(
         service,
         method,
@@ -181,7 +181,7 @@ class HttpAgent implements IAgent {
     requestSerializer: ISerializer,
     responseDeserializeBinary: IDeserializer,
     request: any
-  ): Stream<any> {
+  ): Promise<IStream<any>> {
     throw new Error("method not supported");
   }
 
@@ -191,7 +191,7 @@ class HttpAgent implements IAgent {
     requestSerializer: ISerializer,
     responseDeserializeBinary: IDeserializer,
     request: any
-  ): Stream<any> {
+  ): Promise<IStream<any>> {
     throw new Error("method not supported");
   }
 
@@ -272,6 +272,7 @@ class WebSocketConnection {
       ws.onmessage = null;
       ws.onerror = null;
       ws.onclose = null;
+      console.log("calls:", this._calls);
       this._calls.forEach((cb) => cb(null));
       this._calls.clear();
     };
@@ -334,7 +335,7 @@ class WebSocketConnection {
     return future.promise;
   }
 
-  rpcUnaryStream(
+  async rpcUnaryStream(
     service: string,
     method: string,
     requestSerializer: ISerializer,
@@ -380,7 +381,7 @@ class WebSocketConnection {
     return response;
   }
 
-  rpcStreamStream(
+  async rpcStreamStream(
     service: string,
     method: string,
     requestSerializer: ISerializer,

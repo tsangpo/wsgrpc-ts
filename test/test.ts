@@ -1,4 +1,6 @@
-import { test } from "./test.proto.generated";
+import { test } from "./protos/test.proto.generated";
+import { Channel, Server, IStream, Stream } from "../node";
+import http from "http";
 
 const bytes = test.DataFrame.encode({
   callID: 1,
@@ -13,10 +15,8 @@ const f = test.DataFrame.decode(bytes);
 
 console.log(bytes, JSON.stringify(f));
 
-import { Channel, Server, IStream, Stream } from "../node";
-import http from "http";
 class MyWS implements test.IWS {
-  async GetEndponit(request: test.Simple.IOK): Promise<test.IEndponit> {
+  async getEndponit(request: test.Simple.IOK): Promise<test.IEndponit> {
     return { url: "wss:asdfasdfas" };
   }
 
@@ -41,21 +41,21 @@ async function main() {
   test.WS.addToServer(server, async (req) => new MyWS());
 
   const s = http.createServer();
-  server.mountHttpServer(s, "/wsgrpc");
+  server.listenHttpServerUpgrade(s, "/wsgrpc");
   server.fallback((request, response) => {
     response.end("hello");
   });
   s.listen(2345);
 
   const stubHttp = new test.WS(new Channel("http://127.0.0.1:2345/wsgrpc"));
-  const res1 = await stubHttp.GetEndponit({});
+  const res1 = await stubHttp.getEndponit({});
   console.log("http GetEndponit:", res1);
 
   const stub = new test.WS(new Channel("ws://127.0.0.1:2345/wsgrpc"));
 
   for (let i = 0; i < 1000; i++) {
     const stream = await stub.pullEndponits({});
-    stream.read((e) => {
+    stream.read((e: any) => {
       // console.log("sync" + i, e);
     });
     for await (const e of stream.readToItorator()) {

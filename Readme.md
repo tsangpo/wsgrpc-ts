@@ -29,6 +29,8 @@ protobuf suport:
 # TODO
 
 - use json codec and http post protocal
+- stream data writen before read should can be read.
+- call callback for log.
 
 ## Notes
 

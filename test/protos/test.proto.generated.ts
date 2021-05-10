@@ -8,7 +8,7 @@ import {
   IChannel as $IChannel,
   Reader as $Reader,
   Writer as $Writer,
-} from "..";
+} from "../..";
 
 export namespace test {
   export interface IW {}
@@ -510,7 +510,7 @@ export namespace test {
   /** test service */
   export interface IWS {
     /** return a value */
-    GetEndponit(request: Simple.IOK): Promise<IEndponit>;
+    getEndponit(request: Simple.IOK): Promise<IEndponit>;
 
     /** return a stream */
     pullEndponits(request: Simple.IOK): Promise<$IStream<IEndponit>>;
@@ -524,7 +524,7 @@ export namespace test {
       server.addService(
         "test.WS",
         {
-          GetEndponit: [Simple.OK.decode, Endponit.encode, false, false],
+          getEndponit: [Simple.OK.decode, Endponit.encode, false, false],
           pullEndponits: [Simple.OK.decode, Endponit.encode, false, true],
         },
         factory
@@ -533,10 +533,10 @@ export namespace test {
 
     constructor(private channel: $IChannel) {}
 
-    async GetEndponit(request: Simple.IOK): Promise<IEndponit> {
+    async getEndponit(request: Simple.IOK): Promise<IEndponit> {
       return await this.channel.rpcUnaryUnary(
         "test.WS",
-        "GetEndponit",
+        "getEndponit",
         Simple.OK.encode,
         Endponit.decode,
         request
