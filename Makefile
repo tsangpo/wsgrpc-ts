@@ -2,7 +2,8 @@
 build:
 	rm -rf lib dist
 	npx tsc
-	npx webpack -c config/bin.webpack.js
+	# npx webpack -c config/bin.webpack.js
+	npx esbuild src/bin/main.ts --bundle --minify --platform=node --target=node10.4 --external:ws --external:node-fetch --outfile=dist/bin.js
 	npx webpack -c config/lib.webpack.js
 	# npx webpack -c config/lib_node.webpack.js
 	npx api-extractor run --local --verbose
@@ -24,6 +25,3 @@ publish: build
 	#npm adduser
 	#npm login
 	npm publish
-
-bundle:
-	tsc --moduleResolution node --target es2018 --esModuleInterop --skipLibCheck --declaration -m amd --outFile dist/node-tsc.js src/node.ts
