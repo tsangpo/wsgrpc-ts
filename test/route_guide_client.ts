@@ -19,7 +19,7 @@ async function main() {
 
   const req3 = new Stream<routeguide.IPoint>();
   req3.writeFromIterator(async function* () {
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    // await new Promise((resolve) => setTimeout(resolve, 200));
     yield { latitude: 1, longitude: 2 };
     yield { latitude: 3, longitude: 4 };
   });
@@ -29,14 +29,17 @@ async function main() {
   const req4 = new Stream<routeguide.IRouteNote>();
   const res4 = await stub.routeChat(req4);
   req4.writeFromIterator(async function* () {
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    // await new Promise((resolve) => setTimeout(resolve, 200));
+    console.log("y 0");
     yield { message: "r1", location: { longitude: 1, latitude: 2 } };
+    console.log("y 1");
     yield { message: "r2", location: { longitude: 3, latitude: 4 } };
+    console.log("y 2");
   });
   for await (const r4 of res4.readToItorator()) {
     console.log("routeChat: ", r4);
   }
 
-  channel.reset();
+  // channel.reset();
   console.log("end");
 }

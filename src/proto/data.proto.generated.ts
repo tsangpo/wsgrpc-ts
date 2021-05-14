@@ -67,10 +67,10 @@ export namespace data {
     }
     export namespace Trailer {
       export const Status = {
-        UNKNOWN: 0,
-        OK: 1,
-        ERROR: 2,
-        ABORT: 3,
+        OK: 0,
+        ERROR: 1,
+        ABORT: 2,
+        UNKNOWN: 3,
       };
 
       export function encode(message: ITrailer, writer: $Writer): $Writer;

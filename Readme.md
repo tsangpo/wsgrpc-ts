@@ -16,7 +16,7 @@ $dist_file.proto.generated.ts: target ts file
 
 ### use stub file
 
-see example file: "test/main.ts"
+see example file: "test/test.ts"
 
 ## futures
 
@@ -29,8 +29,11 @@ protobuf suport:
 # TODO
 
 - use json codec and http post protocal
-- stream data writen before read should can be read.
 - call callback for log.
+
+# known issues
+
+- client stream message not process in time。
 
 ## Notes
 

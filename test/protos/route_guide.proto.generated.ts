@@ -8,7 +8,7 @@ import {
   IChannel as $IChannel,
   Reader as $Reader,
   Writer as $Writer,
-} from "../..";
+} from "../../src";
 
 export namespace routeguide {
   export interface IRouteGuide {

@@ -39,12 +39,19 @@ export interface IStream<T = any> {
 export class Stream<T = any> implements IStream {
   private _readers: { future: Future<void>; onMessage: (o: T) => void }[] = [];
   private _closed = false;
+  private _cache: T[] = [];
+  private _error: any;
 
   constructor(private _onabort?: (reason: any) => void) {}
 
   // sender
 
   write(o: T) {
+    if (this._readers.length == 0) {
+      this._cache.push(o);
+      console.log("cache stream input");
+      return;
+    }
     this._readers.forEach((r) => {
       r.onMessage(o);
     });
@@ -52,6 +59,10 @@ export class Stream<T = any> implements IStream {
 
   error(e: any) {
     this._closed = true;
+    if (this._readers.length == 0) {
+      this._error = e;
+      return;
+    }
     this._readers.forEach((r) => {
       r.future.reject(e);
     });
@@ -82,6 +93,17 @@ export class Stream<T = any> implements IStream {
   }
 
   read(onMessage: (o: T) => void): Promise<void> {
+    // pull from cache
+    while (this._cache.length > 0) {
+      onMessage(this._cache.shift()!);
+    }
+    if (this._closed) {
+      if (this._error) {
+        return Promise.reject(this._error);
+      }
+      return Promise.resolve();
+    }
+
     const future = new Future();
     const reader = { future, onMessage };
     this._readers.push(reader);
@@ -122,5 +144,28 @@ export class Stream<T = any> implements IStream {
     } catch (e) {
       this.error(e);
     }
+  }
+}
+
+export class StreamDelegate {
+  private stream?: Stream;
+  private abortReason: any;
+
+  bind(stream: Stream) {
+    this.stream = stream;
+    if (this.abortReason) {
+      this.stream.abort(this.abortReason);
+    }
+  }
+
+  abort(reason: any) {
+    this.abortReason = reason;
+    if (this.stream) {
+      this.stream.abort(this.abortReason);
+    }
+  }
+
+  get closed(): boolean {
+    return this.abortReason || this.stream?.closed;
   }
 }

@@ -29,7 +29,7 @@ class RouteGuide implements routeguide.IRouteGuide {
     });
     stream.writeFromIterator(async function* () {
       yield { name: "list 1", location: { latitude: 1, longitude: 2 } };
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       yield { name: "list 2", location: { latitude: 1, longitude: 2 } };
     });
     return stream;

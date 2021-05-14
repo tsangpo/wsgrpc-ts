@@ -1,5 +1,5 @@
 import http from "http";
-import { lcFirst, Stream } from "./utils";
+import { lcFirst, Stream, StreamDelegate } from "./utils";
 import { data as pb } from "./proto/data.proto.generated";
 import { v1to2 } from "./v1/v1to2";
 
@@ -29,7 +29,7 @@ interface IRpcServer {
   responseEncode: ISerializer;
   requestStream: boolean;
   responseStream: boolean;
-  exec: (request: any) => Promise<any>;
+  exec: (request: any) => Promise<any> | Stream<any>;
 }
 
 export class Server {
@@ -56,11 +56,11 @@ export class Server {
 
   public listenHttpServerRequest(server: http.Server, path: string) {
     // http
-    const httpHandler = new HttpHandler(path, this.services);
     server.on(
       "request",
       (request: http.IncomingMessage, response: http.ServerResponse) => {
         if (request.url?.startsWith(path)) {
+          const httpHandler = new HttpHandler(path, this.services);
           httpHandler.handle(request, response);
         } else if (this.fallbacks?.onrequest) {
           this.fallbacks.onrequest(request, response);
@@ -121,8 +121,7 @@ class Caller {
   async getRpc(
     request: http.IncomingMessage,
     service: string,
-    method: string,
-    isolated = false
+    method: string
   ): Promise<IRpcServer> {
     const meta = this.serviceDirectory[service];
     if (!meta) {
@@ -133,21 +132,13 @@ class Caller {
       throw new Error(`method not found: ${service}.${method}`);
     }
 
-    let sp: Promise<any>;
-    if (isolated) {
+    let sp = this.services[service];
+    if (!sp) {
       sp = meta.factory(request);
       if (!sp) {
         throw new Error(`create service error: ${service}.${method}`);
       }
-    } else {
-      sp = this.services[service];
-      if (!sp) {
-        sp = meta.factory(request);
-        if (!sp) {
-          throw new Error(`create service error: ${service}.${method}`);
-        }
-        this.services[service] = sp;
-      }
+      this.services[service] = sp;
     }
     const s = await sp;
 
@@ -156,12 +147,8 @@ class Caller {
       throw new Error(`method not implemented: ${service}.${method}`);
     }
 
-    const [
-      requestDecode,
-      responseEncode,
-      requestStream,
-      responseStream,
-    ] = meta.rpcs[method];
+    const [requestDecode, responseEncode, requestStream, responseStream] =
+      meta.rpcs[method];
     return {
       requestDecode,
       responseEncode,
@@ -197,7 +184,7 @@ class HttpHandler {
       .split("/");
 
     try {
-      const rpc = await this.caller.getRpc(request, service, method, true);
+      const rpc = await this.caller.getRpc(request, service, method);
       if (!rpc.requestStream && !rpc.responseStream) {
         await this.rpcUnaryUnary(request, response, rpc);
       } else {
@@ -288,7 +275,7 @@ class WebSocketConnection {
         return;
       }
 
-      // console.log("frame", frame, event.data);
+      // console.log("frame", frame);
       if (!frame.header && !frame.trailer && !frame.body) {
         // try v1
         frame = v1to2.tryDecodeDataFrame(new Uint8Array(event.data))!;
@@ -372,6 +359,9 @@ class WebSocketConnection {
             },
           });
         }
+      } else {
+        console.log("frame without header and callback:", frame);
+        console.log("this is a bug of client stream request");
       }
     };
     ws.onclose = () => {
@@ -414,19 +404,21 @@ class WebSocketConnection {
 
   async rpcUnaryStream({ callID, body }: pb.IDataFrame, rpc: IRpcServer) {
     const request = rpc.requestDecode(body!);
-    const response: Stream = await rpc.exec(request);
+    const streamDelegate = new StreamDelegate();
     this.registerCall(callID!, (frame) => {
       // console.debug("rpcUnaryStream.onframe:", { callID, frame });
       if (!frame) {
-        response.abort(new Error("lost connection"));
+        streamDelegate.abort(new Error("lost connection"));
         return;
       }
       if (frame.trailer) {
         if (frame.trailer.status == pb.DataFrame.Trailer.Status.ABORT) {
-          response.abort(new Error(frame.trailer.message));
+          streamDelegate.abort(new Error(frame.trailer.message));
         }
       }
     });
+    const response: Stream = await rpc.exec(request);
+    streamDelegate.bind(response);
     response
       .read((message) => {
         this.sendMessage({
@@ -464,16 +456,18 @@ class WebSocketConnection {
         },
       });
     });
-    const response: Stream = await rpc.exec(request);
+
+    const streamDelegate = new StreamDelegate();
     const checkCloseCall = () => {
-      if (request.closed && response.closed) {
+      if (request.closed && streamDelegate.closed) {
         this._calls.delete(callID!);
       }
     };
 
     this.registerCall(callID!, (frame) => {
+      // console.log("rpcStreamStream read frame:", frame);
       if (!frame) {
-        response.abort(new Error("lost connection"));
+        streamDelegate.abort(new Error("lost connection"));
         return;
       }
       if (frame.body) {
@@ -486,13 +480,17 @@ class WebSocketConnection {
         } else if (frame.trailer.status == pb.DataFrame.Trailer.Status.ERROR) {
           request.error(new Error(frame.trailer.message));
         } else if (frame.trailer.status == pb.DataFrame.Trailer.Status.ABORT) {
-          response.abort(new Error(frame.trailer.message));
+          streamDelegate.abort(new Error(frame.trailer.message));
         }
         checkCloseCall();
       }
     });
+
+    const response: Stream = await rpc.exec(request);
+    streamDelegate.bind(response);
     response
       .read((message) => {
+        // console.log("rpcStreamStream send message:", message);
         this.sendMessage({
           callID,
           body: rpc.responseEncode(message),
@@ -527,7 +525,7 @@ class WebSocketConnection {
       });
     });
 
-    console.log("rpcStreamUnary:", callID);
+    // console.log("rpcStreamUnary:", callID);
     this.registerCall(callID!, (frame) => {
       console.log("request:", frame);
       if (!frame) {

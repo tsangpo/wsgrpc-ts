@@ -36,10 +36,10 @@ message DataFrame {
   // stream end or error message
   message Trailer {
     enum Status {
-      UNKNOWN = 0;
-      OK = 1;
-      ERROR = 2;
-      ABORT = 3;
+      OK = 0;
+      ERROR = 1;
+      ABORT = 2;
+      UNKNOWN = 3;
     }
     Status status = 1;
     string message = 2;

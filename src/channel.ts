@@ -403,6 +403,7 @@ class WebSocketConnection {
       }
     };
     const callID = this.registerCall((frame) => {
+      // console.log("rpcStreamStream read frame:", frame);
       if (!frame) {
         stream.error(new Error("lost connection"));
         request.abort(new Error("lost connection"));
@@ -429,6 +430,7 @@ class WebSocketConnection {
     });
     request
       .read((msg) => {
+        // console.log("rpcStreamStream send message:", msg);
         const body = requestSerializer(msg);
         this.sendMessage({
           callID,
