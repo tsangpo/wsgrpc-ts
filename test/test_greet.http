@@ -1,0 +1,6 @@
+
+POST http://localhost:5000/greet.Greeter/sayHello
+Content-Type: application/grpc-web+proto
+
+\0x00
+

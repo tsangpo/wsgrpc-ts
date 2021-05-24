@@ -1,3 +1,5 @@
+import type { IStream } from "./types";
+
 export function lcFirst(name: string) {
   return name[0].toLowerCase() + name.substr(1);
 }
@@ -28,12 +30,6 @@ export class Future<T = any> {
   get resolved() {
     return this._resolved;
   }
-}
-
-export interface IStream<T = any> {
-  abort(reason: any): void;
-  read(onMessage: (o: T) => void): Promise<void>;
-  readToItorator(): AsyncIterableIterator<T>;
 }
 
 export class Stream<T = any> implements IStream {

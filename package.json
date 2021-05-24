@@ -1,6 +1,6 @@
 {
   "name": "wsgrpc",
-  "version": "2.1.16",
+  "version": "2.2.0",
   "description": "",
   "main-ts": "src/index.ts",
   "main": "dist/lib.js",
