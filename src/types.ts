@@ -32,3 +32,5 @@ export interface IAgent {
   reset(): void;
   getConnection(): Promise<IChannel> | IChannel;
 }
+
+export type IMetadata = { [key: string]: string };

@@ -1,21 +1,34 @@
-import { IAgent, IDeserializer, ISerializer, IStream } from "./types";
+import {
+  IAgent,
+  IDeserializer,
+  IMetadata,
+  ISerializer,
+  IStream,
+} from "./types";
 
 //////////// gRPC-Web /////////////
 
 /**
  * A simple gGRP-Web protocol implement. support only rpcUnaryUnary
  */
-export class GrpcWebAgent implements IAgent {
+export class HttpAgent implements IAgent {
   // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md
   // https://github.com/grpc/grpc-web/blob/master/doc/browser-features.md
   // https://github.com/grpc/grpc-web/blob/master/javascript/net/grpc/web/statuscode.js
 
   url: string;
-  constructor(
-    url: string,
-    private type: "grpc" | "grpc-web" | "grpc-web+proto" | "json" = "grpc-web"
-  ) {
+  metadata: IMetadata;
+
+  constructor(url: string, metadata?: IMetadata) {
     this.url = url + (url.endsWith("/") ? "" : "/");
+
+    if (!metadata) {
+      metadata = {};
+    }
+    if (!metadata["Content-Type"]) {
+      metadata["Content-Type"] = "application/grpc-web";
+    }
+    this.metadata = metadata;
   }
 
   getConnection() {
@@ -31,28 +44,27 @@ export class GrpcWebAgent implements IAgent {
     responseDeserializeBinary: IDeserializer,
     request: any
   ) {
-    const contentType = `application/${this.type}`;
+    const contentType = this.metadata["Content-Type"];
+
     let reqBody: Uint8Array | string;
-    if (this.type == "grpc-web" || this.type == "grpc-web+proto") {
+    if (
+      contentType == "application/grpc-web" ||
+      contentType == "application/grpc-web+proto"
+    ) {
       reqBody = encodeRequestToBody(requestSerializer(request));
-    } else if (this.type == "grpc") {
+    } else if (contentType == "application/grpc") {
       reqBody = requestSerializer(request);
-    } else if (this.type == "json") {
+    } else if (contentType == "application/json") {
       reqBody = JSON.stringify(request);
     } else {
       throw new Error(`Unknown Content-type to use. ${contentType}`);
     }
 
-    console.log("req:", {
-      body: reqBody,
-      headers: { "Content-Type": contentType, Accept: contentType },
-    });
-
     const url = this.url + service + "/" + method;
     const res = await fetch(url, {
       method: "POST",
       body: reqBody,
-      headers: { "Content-Type": contentType, Accept: contentType },
+      headers: this.metadata,
     });
     const resContentType = res.headers.get("Content-Type");
 

@@ -1,30 +1,54 @@
-import { IAgent, IChannel, IDeserializer, ISerializer, IStream } from "./types";
+import {
+  IAgent,
+  IChannel,
+  IDeserializer,
+  IMetadata,
+  ISerializer,
+  IStream,
+} from "./types";
 import { WebSocketAgent } from "./channel_ws";
-import { GrpcWebAgent } from "./channel_web";
+import { HttpAgent } from "./channel_h1";
+
+interface IOptions {
+  contentType?: "grpc" | "grpc-web" | "grpc-web+proto" | "json";
+  authorizationToken?: string;
+}
+
+function optionsMetadata({
+  contentType,
+  authorizationToken,
+}: IOptions): IMetadata {
+  let metadata: IMetadata = {};
+  if (contentType) {
+    metadata["Content-Type"] = `application/${contentType}`;
+  }
+  if (authorizationToken) {
+    metadata["Authorization"] = `Bearer ${authorizationToken}`;
+  }
+  return metadata;
+}
 
 export class Channel implements IChannel {
   agent!: IAgent;
+  callback?: (req: any, res?: any, err?: any) => void;
 
-  constructor(
-    url: string,
-    private callback?: (req: any, res?: any, err?: any) => void
-  ) {
-    if (!url) {
-      throw new Error("no url provided.");
-    }
-    this.reset(url);
+  constructor(url: string, options?: IOptions) {
+    this.reset(url, options);
   }
 
-  reset(url?: string) {
+  onCall(callback: (req: any, res?: any, err?: any) => void) {
+    this.callback = callback;
+  }
+
+  reset(url: string, options?: IOptions) {
     this.agent?.reset();
-    if (url) {
-      if (url.startsWith("http:") || url.startsWith("https:")) {
-        this.agent = new GrpcWebAgent(url);
-      } else if (url.startsWith("ws:") || url.startsWith("wss:")) {
-        this.agent = new WebSocketAgent(url);
-      } else {
-        throw new Error("channel url not supported: " + url);
-      }
+    if (url.startsWith("http:") || url.startsWith("https:")) {
+      const metadata = optionsMetadata(options || {});
+      this.agent = new HttpAgent(url, metadata);
+    } else if (url.startsWith("ws:") || url.startsWith("wss:")) {
+      this.agent = new WebSocketAgent(url);
+    } else {
+      throw new Error("channel url not supported: " + url);
     }
   }
 
