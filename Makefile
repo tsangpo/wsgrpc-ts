@@ -3,7 +3,7 @@ build:
 	rm -rf lib dist
 	npx tsc
 	# npx webpack -c config/bin.webpack.js
-	npx esbuild src/bin/main.ts --bundle --minify --platform=node --target=node10.4 --external:ws,node-fetch --outfile=dist/bin.js
+	npx esbuild src/bin/main.ts --bundle --minify --banner:js='#!/usr/bin/env node' --platform=node --target=node10.4 --external:ws,node-fetch --outfile=dist/bin.js
 	npx webpack -c config/lib.webpack.js
 	# npx webpack -c config/lib_node.webpack.js
 	npx api-extractor run --local --verbose
