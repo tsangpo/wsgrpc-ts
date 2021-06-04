@@ -41,6 +41,7 @@ async function main() {
   test.WS.addToServer(server, async (req) => new MyWS());
 
   const s = http.createServer();
+  server.listenHttpServerRequest(s, "/wsgrpc");
   server.listenHttpServerUpgrade(s, "/wsgrpc");
   server.fallback((request, response) => {
     response.end("hello");
@@ -53,7 +54,7 @@ async function main() {
 
   const stub = new test.WS(new Channel("ws://127.0.0.1:2345/wsgrpc"));
 
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < 10; i++) {
     const stream = await stub.pullEndponits({});
     stream.read((e: any) => {
       // console.log("sync" + i, e);
