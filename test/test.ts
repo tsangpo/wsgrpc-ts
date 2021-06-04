@@ -48,7 +48,9 @@ async function main() {
   });
   s.listen(2345);
 
-  const stubHttp = new test.WS(new Channel("http://127.0.0.1:2345/wsgrpc"));
+  const stubHttp = new test.WS(
+    new Channel("http://127.0.0.1:2345/wsgrpc", { contentType: "grpc" })
+  );
   const res1 = await stubHttp.getEndponit({});
   console.log("http GetEndponit:", res1);
 

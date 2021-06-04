@@ -1,6 +1,9 @@
 # wsgrpc
 
-rpc using protobuf and websocket protocal
+A RPC code generator and runtime. Codes of client side and server side are generated from a grpc proto file.
+
+- When the h1 transport protocal is used, stream request and response are not supported, and content type can be one of ["grpc" | "grpc-web" | "grpc-web+proto" | "json"].
+- When websocket is used, rpc with request stream and response stream is allowed.
 
 ## Usage
 
@@ -28,7 +31,6 @@ protobuf suport:
 
 # TODO
 
-- use json codec and http post protocal
 - call callback for log.
 
 # known issues
