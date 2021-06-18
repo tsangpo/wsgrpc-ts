@@ -29,7 +29,7 @@ function _grpcWebEncodeFrame(type: number, data: Uint8Array): Uint8Array {
   payload.set(data, 5);
   return payload;
 }
-export function grpcWebEncodeStream(s: IStream): Buffer {
+export function grpcWebEncodeStream(s: IStream): Uint8Array {
   const frames = s.messages.map((m) => _grpcWebEncodeFrame(FrameType.DATA, m));
   if (s.trailer) {
     const metadata = s.trailer.metadata || {};
@@ -46,7 +46,14 @@ export function grpcWebEncodeStream(s: IStream): Buffer {
     );
   }
 
-  return Buffer.concat(frames);
+  const totalLength = frames.reduce((o, i) => o + i.length, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const f of frames) {
+    result.set(f, offset);
+    offset += f.length;
+  }
+  return result;
 }
 
 // export function grpcWebEncodeRequest(request: Uint8Array): Uint8Array {

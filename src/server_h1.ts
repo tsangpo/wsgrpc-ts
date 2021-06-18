@@ -120,7 +120,7 @@ export class HttpHandler {
         messages: [rpc.responseEncode(response)],
         trailer: { code: 0 },
       });
-      res.end(result, "binary");
+      res.end(Buffer.from(result), "binary");
     } else {
       throw new Error(`content-type not supported: ${contentType}`);
     }
