@@ -190,19 +190,23 @@ function toTsTypeInterface(field: protobuf.Field) {
   const ref = type.fullName;
   const base = field.parent!.fullName;
 
-  // 子结构
-  if (ref.startsWith(base)) {
+  // internal message type
+  if (ref.startsWith(base + ".")) {
     return field.parent!.name + ".I" + type.name;
   }
 
-  // 其他
-  let i = 0;
-  for (; i < ref.length; ++i) {
-    if (ref[i] != base[i]) {
+  // external message type
+  const refCC = ref.split(".");
+  const baseCC = base.split(".");
+  while (refCC.length > 0 && baseCC.length > 0) {
+    if (refCC[0] == baseCC[0]) {
+      refCC.shift();
+      baseCC.shift();
+    } else {
       break;
     }
   }
-  return I(ref.substr(i));
+  return I(refCC.join("."));
 }
 
 function toTsType(field: protobuf.Field) {
