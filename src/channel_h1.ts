@@ -76,34 +76,32 @@ export class HttpAgent implements IAgent {
       const error = res.statusText + ": " + (await res.text());
       throw new Error(error);
     }
-    const resContentType = res.headers.get("Content-Type");
 
+    const code = Number(res.headers.get(GRPC_STATUS));
+    const message = decodeURIComponent(
+      res.headers.get(GRPC_STATUS_MESSAGE) || ""
+    );
+    if (code != 0) {
+      throw { code, message };
+    }
+
+    const resContentType = res.headers.get("Content-Type");
     if (
       resContentType === "application/grpc-web+proto" ||
       resContentType === "application/grpc-web"
     ) {
       const resBody = await res.arrayBuffer();
       const result = grpcWebDecodeStream(resBody);
-      const code = result.trailer?.code;
-      const message = result.trailer?.metadata;
-      if (code != 0) {
-        throw new Error(`grpc error: ${message}: ${result}`);
-      }
+      // const code = result.trailer?.code;
+      // const message = result.trailer?.message;
+      // if (code != 0) {
+      //   throw { code, message };
+      // }
       return responseDeserializeBinary(result.messages[0]);
     } else if (resContentType === "application/grpc") {
       const resBody = await res.arrayBuffer();
-      const code = Number(res.headers.get(GRPC_STATUS));
-      const message = res.headers.get(GRPC_STATUS_MESSAGE);
-      if (code != 0) {
-        throw new Error(message!);
-      }
       return responseDeserializeBinary(new Uint8Array(resBody));
     } else if (resContentType === "application/json") {
-      const code = Number(res.headers.get(GRPC_STATUS));
-      const message = res.headers.get(GRPC_STATUS_MESSAGE);
-      if (code != 0) {
-        throw new Error(message!);
-      }
       return await res.json();
     } else {
       throw new Error(`Unknown Content-type received. ${resContentType}`);
