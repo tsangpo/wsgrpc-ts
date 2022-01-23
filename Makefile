@@ -1,13 +1,17 @@
 
 build:
 	rm -rf lib dist
-	npx tsc
-	# npx webpack -c config/bin.webpack.js
-	npx esbuild src/bin/main.ts --bundle --minify --banner:js='#!/usr/bin/env node' --platform=node --target=node10.4 --external:ws,node-fetch --outfile=dist/bin.js
-	npx webpack -c config/lib.webpack.js
-	# npx webpack -c config/lib_node.webpack.js
-	npx api-extractor run --local --verbose
-	# ts-node src/dev/node-api.ts
+
+	### cli
+	pnpx esbuild src/bin/main.ts --bundle --minify --banner:js='#!/usr/bin/env node' --platform=node --target=node10.4 --external:ws,node-fetch --outfile=dist/bin.js
+
+	### lib
+	pnpx esbuild --bundle --minify --platform=neutral --format=esm ./src/index.ts --outfile=dist/lib.esm.js
+	pnpx esbuild --bundle --minify --platform=neutral --format=cjs ./src/index.ts --outfile=dist/lib.cjs.js
+
+	### types
+	pnpx tsc
+	pnpx api-extractor run --local --verbose
 
 test:
 	# ts-node src/bin/main.ts src/proto/data.proto
@@ -18,7 +22,7 @@ test:
 	node dist/bin.js test/protos/route_guide.proto
 	node dist/bin.js test/protos/greet.proto
 	ts-node test/test.ts
-	node --inspect -r ts-node/register test/test.ts
+	node --inspect --loader ts-node/esm test/test.ts
 	ts-node test/route_guide_server.ts
 	ts-node test/route_guide_client.ts
 

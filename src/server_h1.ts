@@ -37,7 +37,7 @@ export class HttpHandler {
         response.statusCode = 501;
         response.end();
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log("exec error:", e);
       response.statusCode = 500;
       response.end(e.toString());

@@ -8,7 +8,7 @@ import {
   IChannel as $IChannel,
   Reader as $Reader,
   Writer as $Writer,
-} from "../..";
+} from "../../dist/lib.js";
 
 export namespace test {
   export interface IW {}

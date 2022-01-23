@@ -1,5 +1,5 @@
-import { test } from "./protos/test.proto.generated";
-import { Channel, Server, IStream, Stream } from "../node";
+import { test } from "./protos/test.proto.generated.js";
+import { Channel, Server, IStream, Stream } from "../node.js";
 import http from "http";
 
 const bytes = test.DataFrame.encode({

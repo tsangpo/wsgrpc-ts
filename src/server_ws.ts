@@ -58,7 +58,7 @@ export class WebSocketConnection {
                     status: pb.DataFrame.Trailer.Status.OK,
                   },
                 });
-              } catch (e) {
+              } catch (e: any) {
                 // console.warn("v1 rpc error:", e.stack);
                 this.sendMessage({
                   callID: frame.callID,
@@ -96,7 +96,7 @@ export class WebSocketConnection {
           } else if (rpc.requestStream && rpc.responseStream) {
             await this.rpcStreamStream(frame, rpc);
           }
-        } catch (e) {
+        } catch (e: any) {
           this.sendMessage({
             callID: frame.callID,
             trailer: {
