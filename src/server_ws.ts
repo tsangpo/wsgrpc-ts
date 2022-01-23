@@ -1,14 +1,12 @@
 import http from "http";
 import { Stream, StreamDelegate } from "./utils";
 import { data as pb } from "./proto/data.proto.generated";
-import { v1to2 } from "./v1/v1to2";
 import { ICaller, IRpcServer } from "./types";
 
 type IFrameCallback = (frame: pb.IDataFrame | null) => void;
 
 export class WebSocketConnection {
   _calls = new Map<number, IFrameCallback>();
-  _v = "";
 
   constructor(
     private ws: WebSocket,
@@ -19,64 +17,6 @@ export class WebSocketConnection {
       let frame = pb.DataFrame.decode(new Uint8Array(event.data));
       if (!frame.callID) {
         return;
-      }
-
-      // console.log("frame", frame);
-      if (!frame.header && !frame.trailer && !frame.body) {
-        // try v1
-        frame = v1to2.tryDecodeDataFrame(new Uint8Array(event.data))!;
-        // console.log("v1 frame:", frame);
-        if (frame) {
-          this._v = "v1";
-          if (frame.header) {
-            // 发起，特殊处理
-            const callID = frame.callID!;
-            const { service, method } = frame.header;
-            // console.log("s m", { service, method });
-            this.ws.send(v1to2.encodeRequestOKResponse(callID));
-            // console.log("encodeRequestOKResponse, set", { callID });
-            // wait next data frame
-            this._calls.set(callID, async (frame: pb.IDataFrame | null) => {
-              // console.log("cb", { frame });
-              if (!frame || !frame.body) {
-                return;
-              }
-
-              try {
-                const rpc = await caller.getRpc(request, service!, method!);
-                // console.log("rpc", { rpc });
-                if (rpc.requestStream || rpc.responseStream) {
-                  // 只兼容 rpcUnaryUnary
-                  throw new Error(
-                    "stream not implemented for v1 compatibility"
-                  );
-                }
-                await this.rpcUnaryUnary(frame, rpc);
-                this.sendMessage({
-                  callID,
-                  trailer: {
-                    status: pb.DataFrame.Trailer.Status.OK,
-                  },
-                });
-              } catch (e: any) {
-                // console.warn("v1 rpc error:", e.stack);
-                this.sendMessage({
-                  callID: frame.callID,
-                  trailer: {
-                    status: pb.DataFrame.Trailer.Status.ERROR,
-                    message: e.toString(),
-                  },
-                });
-              } finally {
-                this._calls.delete(callID);
-              }
-            });
-            return;
-          }
-          // pass to handle callback
-        } else {
-          return;
-        }
       }
 
       let callback = this._calls.get(frame.callID!);
@@ -118,15 +58,6 @@ export class WebSocketConnection {
 
   private sendMessage(message: pb.IDataFrame) {
     if (this.ws.readyState != WebSocket.OPEN) {
-      return;
-    }
-
-    // for v1
-    if (this._v == "v1") {
-      const ff = v1to2.encodeDataFrame(message);
-      for (const f of ff) {
-        this.ws.send(f);
-      }
       return;
     }
 
