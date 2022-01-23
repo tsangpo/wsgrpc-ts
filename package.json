@@ -1,12 +1,12 @@
 {
   "name": "wsgrpc",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A RPC code generator and runtime. Codes of client side and server side are generated from a grpc proto file.",
   "author": "tsangpo <tsangpozheng@gmail.com> (https://github.com/tsangpo)",
   "repository": "github:tsangpo/wsgrpc-ts",
   "license": "ISC",
   "bin": {
-    "wsgrpc": "dist/bin.js"
+    "wsgrpc": "dist/bin.cjs"
   },
   "type": "module",
   "main": "dist/lib.cjs.js",

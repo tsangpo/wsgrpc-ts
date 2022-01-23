@@ -3,7 +3,7 @@ build:
 	rm -rf lib dist
 
 	### cli
-	pnpx esbuild src/bin/main.ts --bundle --minify --banner:js='#!/usr/bin/env node' --platform=node --target=node10.4 --external:ws,node-fetch --outfile=dist/bin.js
+	pnpx esbuild src/bin/main.ts --bundle --minify --format=cjs --banner:js='#!/usr/bin/env node' --platform=node --target=node12 --outfile=dist/bin.cjs
 
 	### lib
 	pnpx esbuild --bundle --minify --platform=neutral --format=esm ./src/index.ts --outfile=dist/lib.esm.js

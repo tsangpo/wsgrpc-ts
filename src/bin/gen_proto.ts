@@ -1,4 +1,4 @@
-import fs from "fs";
+import { writeFileSync } from "fs";
 import protobufjs from "protobufjs";
 import { genNested } from "./gen_nested";
 
@@ -17,5 +17,5 @@ import { IStream as $IStream, IChannel as $IChannel, Reader as $Reader, Writer a
 ${root.nestedArray.map(genNested).join("\n")}
 `;
 
-  fs.writeFileSync(outfile, content, "utf8");
+  writeFileSync(outfile, content, "utf8");
 }
