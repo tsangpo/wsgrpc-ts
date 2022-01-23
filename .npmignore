@@ -1,10 +1,7 @@
-src
-test
 config
 lib
-etc
-temp
+src
+test
 .gitignore
 Makefile
 tsconfig.json
-node.ts

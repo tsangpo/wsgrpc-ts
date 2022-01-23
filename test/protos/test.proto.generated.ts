@@ -8,7 +8,7 @@ import {
   IChannel as $IChannel,
   Reader as $Reader,
   Writer as $Writer,
-} from "../../dist/lib.js";
+} from "../../dist/lib.esm.js";
 
 export namespace test {
   export interface IW {}

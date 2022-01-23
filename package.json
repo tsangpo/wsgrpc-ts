@@ -5,12 +5,24 @@
   "author": "tsangpo <tsangpozheng@gmail.com> (https://github.com/tsangpo)",
   "repository": "github:tsangpo/wsgrpc-ts",
   "license": "ISC",
+  "bin": {
+    "wsgrpc": "dist/bin.js"
+  },
   "type": "module",
   "main": "dist/lib.cjs.js",
   "module": "dist/lib.esm.js",
   "types": "dist/lib.d.ts",
-  "bin": {
-    "wsgrpc": "dist/bin.js"
+  "exports": {
+    ".": {
+      "require": "./dist/lib.cjs.js",
+      "import": "./dist/lib.esm.js",
+      "types": "./dist/lib.d.js"
+    },
+    "./node": {
+      "require": "./node.cjs.js",
+      "import": "./node.esm.js",
+      "types": "./node.d.js"
+    }
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.19.4",

@@ -13,6 +13,16 @@ build:
 	pnpx tsc
 	pnpx api-extractor run --local --verbose
 
+build-tsup:
+	# not work
+	rm -rf lib dist
+	### cli
+	pnpx tsup src/bin/main.ts --format iife
+	### lib
+	pnpx tsup src/index.ts --format cjs,esm --dts
+	### lib-node
+	pnpx tsup node.ts --format cjs,esm --dts
+
 test:
 	# ts-node src/bin/main.ts src/proto/data.proto
 	# ts-node src/bin/main.ts src/v1/proto/data.proto
