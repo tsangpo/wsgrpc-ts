@@ -6,8 +6,8 @@ build:
 	pnpx esbuild src/bin/main.ts --bundle --minify --format=cjs --banner:js='#!/usr/bin/env node' --platform=node --target=node12 --outfile=dist/bin.cjs
 
 	### lib
-	pnpx esbuild --bundle --minify --platform=neutral --format=esm ./src/index.ts --outfile=dist/lib.esm.js
-	pnpx esbuild --bundle --minify --platform=neutral --format=cjs ./src/index.ts --outfile=dist/lib.cjs.js
+	pnpx esbuild --bundle --minify --platform=neutral --format=esm ./src/index.ts --outfile=dist/lib.mjs
+	pnpx esbuild --bundle --minify --platform=neutral --format=cjs ./src/index.ts --outfile=dist/lib.cjs
 
 	### types
 	pnpx tsc

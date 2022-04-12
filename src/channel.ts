@@ -1,11 +1,4 @@
-import {
-  IAgent,
-  IChannel,
-  IDeserializer,
-  IMetadata,
-  ISerializer,
-  IStream,
-} from "./types";
+import { IAgent, IChannel, IDeserializer, IMetadata, ISerializer, IStream } from "./types";
 import { WebSocketAgent } from "./channel_ws";
 import { HttpAgent } from "./channel_h1";
 
@@ -14,10 +7,7 @@ interface IOptions {
   authorizationToken?: string;
 }
 
-function optionsMetadata({
-  contentType,
-  authorizationToken,
-}: IOptions): IMetadata {
+function optionsMetadata({ contentType, authorizationToken }: IOptions): IMetadata {
   let metadata: IMetadata = {};
   if (contentType) {
     metadata["Content-Type"] = `application/${contentType}`;
@@ -42,7 +32,7 @@ export class Channel implements IChannel {
 
   reset(url: string, options?: IOptions) {
     this.agent?.reset();
-    if (url.startsWith("http:") || url.startsWith("https:")) {
+    if (url.startsWith("/") || url.startsWith("http:") || url.startsWith("https:")) {
       const metadata = optionsMetadata(options || {});
       this.agent = new HttpAgent(url, metadata);
     } else if (url.startsWith("ws:") || url.startsWith("wss:")) {
@@ -61,13 +51,7 @@ export class Channel implements IChannel {
   ) {
     const c = await this.agent.getConnection();
     return await c
-      .rpcUnaryUnary(
-        service,
-        method,
-        requestSerializer,
-        responseDeserializeBinary,
-        request
-      )
+      .rpcUnaryUnary(service, method, requestSerializer, responseDeserializeBinary, request)
       .then(
         (res: any) => {
           this.callback && this.callback(request, res);
@@ -123,13 +107,7 @@ export class Channel implements IChannel {
   ) {
     const c = await this.agent.getConnection();
     return await c
-      .rpcStreamUnary(
-        service,
-        method,
-        requestSerializer,
-        responseDeserializeBinary,
-        request
-      )
+      .rpcStreamUnary(service, method, requestSerializer, responseDeserializeBinary, request)
       .then(
         (res: any) => {
           this.callback && this.callback(request, res);

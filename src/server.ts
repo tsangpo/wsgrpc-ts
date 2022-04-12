@@ -12,17 +12,6 @@ import { WebSocketConnection } from "./server_ws";
 
 export class Server {
   private services: IServiceDirectory = {};
-  private fallbacks: {
-    onrequest?: (
-      request: http.IncomingMessage,
-      response: http.ServerResponse
-    ) => void;
-    onupgrade?: (
-      request: http.IncomingMessage,
-      socket: any,
-      upgradeHead: any
-    ) => void;
-  } = {};
 
   public addService(
     service: string,
@@ -32,16 +21,28 @@ export class Server {
     this.services[service] = { rpcs, factory };
   }
 
-  public listenHttpServerRequest(server: http.Server, path: string) {
+  middlewares = (req: http.IncomingMessage, res: http.ServerResponse) => {
+    const httpHandler = new HttpHandler(new Caller(this.services));
+    httpHandler.handle(req, res);
+  };
+
+  public listenHttpServerRequest(
+    server: http.Server,
+    path: string,
+    fallback?: (
+      request: http.IncomingMessage,
+      response: http.ServerResponse
+    ) => void
+  ) {
     // http
     server.on(
       "request",
       (request: http.IncomingMessage, response: http.ServerResponse) => {
         if (request.url?.startsWith(path)) {
-          const httpHandler = new HttpHandler(path, new Caller(this.services));
+          const httpHandler = new HttpHandler(new Caller(this.services));
           httpHandler.handle(request, response);
-        } else if (this.fallbacks?.onrequest) {
-          this.fallbacks.onrequest(request, response);
+        } else if (fallback) {
+          fallback(request, response);
         } else {
           response.statusCode = 404;
           response.end();
@@ -50,7 +51,15 @@ export class Server {
     );
   }
 
-  public listenHttpServerUpgrade(server: http.Server, path: string) {
+  public listenHttpServerUpgrade(
+    server: http.Server,
+    path: string,
+    fallback?: (
+      request: http.IncomingMessage,
+      socket: any,
+      upgradeHead: any
+    ) => void
+  ) {
     // websocket
     //@ts-ignore
     const wss = new WebSocket.Server({ noServer: true });
@@ -66,28 +75,14 @@ export class Server {
             (ws: WebSocket, request: http.IncomingMessage) =>
               new WebSocketConnection(ws, request, new Caller(this.services))
           );
-        } else if (this.fallbacks?.onupgrade) {
-          this.fallbacks.onupgrade(request, socket, upgradeHead);
+        } else if (fallback) {
+          fallback(request, socket, upgradeHead);
         } else {
           socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
           socket.destroy();
         }
       }
     );
-  }
-
-  public fallback(
-    onrequest?: (
-      request: http.IncomingMessage,
-      response: http.ServerResponse
-    ) => void,
-    onupgrade?: (
-      request: http.IncomingMessage,
-      socket: any,
-      upgradeHead: any
-    ) => void
-  ) {
-    this.fallbacks = { onrequest, onupgrade };
   }
 }
 
@@ -100,6 +95,7 @@ class Caller implements ICaller {
 
   async getRpc(
     request: http.IncomingMessage,
+    response: http.ServerResponse,
     service: string,
     method: string
   ): Promise<IRpcServer> {
@@ -114,7 +110,7 @@ class Caller implements ICaller {
 
     let sp = this.services[service];
     if (!sp) {
-      sp = meta.factory(request);
+      sp = meta.factory(request, response);
       if (!sp) {
         throw new Error(`create service error: ${service}.${method}`);
       }

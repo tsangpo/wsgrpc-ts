@@ -8,14 +8,7 @@ import {
 } from "./grpc";
 
 export class HttpHandler {
-  pathPrefix: string;
-  constructor(pathPrefix: string, private caller: ICaller) {
-    // important!!! don't use node lib so that can compile for browser
-    if (!pathPrefix.endsWith("/")) {
-      pathPrefix += "/";
-    }
-    this.pathPrefix = pathPrefix;
-  }
+  constructor(private caller: ICaller) {}
 
   async handle(request: http.IncomingMessage, response: http.ServerResponse) {
     if (request.method == "OPTIONS") {
@@ -25,12 +18,10 @@ export class HttpHandler {
     if (request.method != "POST") {
       throw new Error("http method not supported");
     }
-    const [service, method] = request
-      .url!.substr(this.pathPrefix.length)
-      .split("/");
+    const [service, method] = request.url!.split("/").slice(-2);
 
     try {
-      const rpc = await this.caller.getRpc(request, service, method);
+      const rpc = await this.caller.getRpc(request, response, service, method);
       if (!rpc.requestStream && !rpc.responseStream) {
         await this.rpcUnaryUnary(request, response, rpc);
       } else {

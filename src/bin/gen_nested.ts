@@ -4,9 +4,9 @@ import { genService } from "./gen_service";
 
 function genNamespace(n: protobufjs.Namespace): string {
   return `
-  export namespace ${n.name} {
-    ${n.nestedArray.map(genNested).join("\n")}
-  }`;
+export namespace ${n.name} {
+  ${n.nestedArray.map(genNested).join("\n")}
+}`;
 }
 
 function genEnum(n: protobufjs.Enum) {

@@ -1,4 +1,4 @@
-import type { IncomingMessage } from "http";
+import type { IncomingMessage, ServerResponse } from "http";
 
 ///////////// stream //////////////
 
@@ -42,6 +42,7 @@ export type IMetadata = { [key: string]: string };
 export interface ICaller {
   getRpc(
     request: IncomingMessage,
+    response: ServerResponse | undefined,
     service: string,
     method: string
   ): Promise<IRpcServer>;
@@ -52,7 +53,10 @@ export type IServiceMeta = {
   [key: string]: [IDeserializer, ISerializer, boolean, boolean];
 };
 
-export type IServiceFactory = (request: IncomingMessage) => Promise<any>;
+export type IServiceFactory<T = any> = (
+  request: IncomingMessage,
+  response?: ServerResponse
+) => T | Promise<T>;
 
 export type IServiceDirectory = {
   [key: string]: {

@@ -26,7 +26,12 @@ export class WebSocketConnection {
         // new call
         const { service, method } = frame.header;
         try {
-          const rpc = await caller.getRpc(request, service!, method!);
+          const rpc = await caller.getRpc(
+            request,
+            undefined,
+            service!,
+            method!
+          );
           if (!rpc.requestStream && !rpc.responseStream) {
             await this.rpcUnaryUnary(frame, rpc);
           } else if (!rpc.requestStream && rpc.responseStream) {

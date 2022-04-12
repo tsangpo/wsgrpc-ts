@@ -1,16 +1,5 @@
-import {
-  IAgent,
-  IDeserializer,
-  IMetadata,
-  ISerializer,
-  IStream,
-} from "./types";
-import {
-  grpcWebDecodeStream,
-  grpcWebEncodeStream,
-  GRPC_STATUS,
-  GRPC_STATUS_MESSAGE,
-} from "./grpc";
+import { IAgent, IDeserializer, IMetadata, ISerializer, IStream } from "./types";
+import { grpcWebDecodeStream, grpcWebEncodeStream, GRPC_STATUS, GRPC_STATUS_MESSAGE } from "./grpc";
 
 //////////// gRPC-Web /////////////
 
@@ -53,10 +42,7 @@ export class HttpAgent implements IAgent {
     const contentType = this.metadata["Content-Type"];
 
     let reqBody: Uint8Array | string;
-    if (
-      contentType == "application/grpc-web" ||
-      contentType == "application/grpc-web+proto"
-    ) {
+    if (contentType == "application/grpc-web" || contentType == "application/grpc-web+proto") {
       reqBody = grpcWebEncodeStream({ messages: [requestSerializer(request)] });
     } else if (contentType == "application/grpc") {
       reqBody = requestSerializer(request);
@@ -78,9 +64,7 @@ export class HttpAgent implements IAgent {
     }
 
     const code = Number(res.headers.get(GRPC_STATUS));
-    const message = decodeURIComponent(
-      res.headers.get(GRPC_STATUS_MESSAGE) || ""
-    );
+    const message = decodeURIComponent(res.headers.get(GRPC_STATUS_MESSAGE) || "");
     if (code != 0) {
       throw { code, message };
     }

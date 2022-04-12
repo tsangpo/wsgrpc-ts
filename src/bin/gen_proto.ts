@@ -12,7 +12,13 @@ export function genPackage(srcfile: string, outfile: string) {
 /* eslint-disable */
 // @ts-nocheck
   
-import { IStream as $IStream, IChannel as $IChannel, Reader as $Reader, Writer as  $Writer } from "wsgrpc";
+import {
+  IChannel as $IChannel,
+  IServiceFactory as $IServiceFactory,
+  IStream as $IStream,
+  Reader as $Reader,
+  Writer as $Writer,
+} from 'wsgrpc';
 
 ${root.nestedArray.map(genNested).join("\n")}
 `;
