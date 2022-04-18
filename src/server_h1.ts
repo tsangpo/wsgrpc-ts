@@ -1,7 +1,7 @@
 import http from "http";
 import { ICaller, IRpcServer } from "./types";
 import { grpcWebDecodeStream, grpcWebEncodeStream, GRPC_STATUS, GRPC_STATUS_MESSAGE } from "./grpc";
-import { HttpErrors } from "./errors";
+import { HttpStatusCodes } from "./errors";
 
 export class HttpHandler {
   constructor(private caller: ICaller) {}
@@ -12,7 +12,7 @@ export class HttpHandler {
       return;
     }
     if (request.method != "POST") {
-      response.statusCode = HttpErrors.MethodNotAllowed;
+      response.statusCode = HttpStatusCodes.MethodNotAllowed.statusCode;
       response.end();
       return;
     }
@@ -23,26 +23,26 @@ export class HttpHandler {
       if (!rpc.requestStream && !rpc.responseStream) {
         await this.rpcUnaryUnary(request, response, rpc);
       } else {
-        response.statusCode = HttpErrors.NotImplemented;
+        response.statusCode = HttpStatusCodes.NotImplemented.statusCode;
         response.end();
       }
     } catch (e: any) {
       console.log("exec error:", e);
-      response.statusCode = HttpErrors.InternalServerError;
-      response.end(e.toString());
+      response.statusCode = e.statusCode || HttpStatusCodes.InternalServerError.statusCode;
+      response.end(e.message);
     }
   }
 
   _corsOptions(req: http.IncomingMessage, res: http.ServerResponse) {
     const requestOrigin = req.headers["origin"];
     if (!requestOrigin) {
-      res.writeHead(400);
+      res.statusCode = HttpStatusCodes.BadRequest.statusCode;
       res.end("no header: Origin");
       return;
     }
 
     if (!req.headers["access-control-request-method"]) {
-      res.writeHead(400);
+      res.statusCode = HttpStatusCodes.BadRequest.statusCode;
       res.end("no header: Access-Control-Request-Method");
       return;
     }
@@ -52,7 +52,7 @@ export class HttpHandler {
       allowHeaders = "Authentication";
     }
 
-    res.writeHead(204, {
+    res.writeHead(HttpStatusCodes.NoContent.statusCode, {
       "Access-Control-Allow-Origin": requestOrigin,
       "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Methods": "POST",
@@ -107,7 +107,7 @@ export class HttpHandler {
       });
       res.end(Buffer.from(result), "binary");
     } else {
-      throw new Error(`content-type not supported: ${contentType}`);
+      throw HttpStatusCodes.UnsupportedMediaType;
     }
   }
 }

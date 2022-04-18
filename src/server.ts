@@ -3,6 +3,7 @@ import { ICaller, IRpcServer, IServiceDirectory, IServiceFactory, IServiceMeta }
 import { lcFirst } from "./utils";
 import { HttpHandler } from "./server_h1";
 import { WebSocketConnection } from "./server_ws";
+import { HttpError, HttpStatusCodes } from "./errors";
 
 export class Server {
   private services: IServiceDirectory = {};
@@ -70,7 +71,6 @@ class Caller implements ICaller {
   private services: { [key: string]: Promise<any> } = {};
   constructor(private serviceDirectory: IServiceDirectory) {}
 
-  // TODO: handle errors and send coresponding http errors
   async getRpc(
     request: http.IncomingMessage,
     response: http.ServerResponse,
@@ -79,11 +79,17 @@ class Caller implements ICaller {
   ): Promise<IRpcServer> {
     const meta = this.serviceDirectory[service];
     if (!meta) {
-      throw new Error(`service not found: ${service}.${method}`);
+      throw HttpError(
+        HttpStatusCodes.NotFound.statusCode,
+        `service not found: ${service}.${method}`
+      );
     }
     method = lcFirst(method); // NOTE: lcFirst
     if (!(method in meta.rpcs)) {
-      throw new Error(`method not found: ${service}.${method}`);
+      throw HttpError(
+        HttpStatusCodes.NotFound.statusCode,
+        `method not found: ${service}.${method}`
+      );
     }
 
     let sp = this.services[service];
@@ -98,7 +104,10 @@ class Caller implements ICaller {
 
     const rpc = s[method];
     if (!rpc) {
-      throw new Error(`method not implemented: ${service}.${method}`);
+      throw HttpError(
+        HttpStatusCodes.NotImplemented.statusCode,
+        `method not implemented: ${service}.${method}`
+      );
     }
 
     const [requestDecode, responseEncode, requestStream, responseStream] = meta.rpcs[method];
