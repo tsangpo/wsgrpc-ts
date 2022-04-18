@@ -1,11 +1,7 @@
 import http from "http";
 import { ICaller, IRpcServer } from "./types";
-import {
-  grpcWebDecodeStream,
-  grpcWebEncodeStream,
-  GRPC_STATUS,
-  GRPC_STATUS_MESSAGE,
-} from "./grpc";
+import { grpcWebDecodeStream, grpcWebEncodeStream, GRPC_STATUS, GRPC_STATUS_MESSAGE } from "./grpc";
+import { HttpErrors } from "./errors";
 
 export class HttpHandler {
   constructor(private caller: ICaller) {}
@@ -16,7 +12,9 @@ export class HttpHandler {
       return;
     }
     if (request.method != "POST") {
-      throw new Error("http method not supported");
+      response.statusCode = HttpErrors.MethodNotAllowed;
+      response.end();
+      return;
     }
     const [service, method] = request.url!.split("/").slice(-2);
 
@@ -25,12 +23,12 @@ export class HttpHandler {
       if (!rpc.requestStream && !rpc.responseStream) {
         await this.rpcUnaryUnary(request, response, rpc);
       } else {
-        response.statusCode = 501;
+        response.statusCode = HttpErrors.NotImplemented;
         response.end();
       }
     } catch (e: any) {
       console.log("exec error:", e);
-      response.statusCode = 500;
+      response.statusCode = HttpErrors.InternalServerError;
       response.end(e.toString());
     }
   }
@@ -80,11 +78,7 @@ export class HttpHandler {
     });
   }
 
-  async rpcUnaryUnary(
-    req: http.IncomingMessage,
-    res: http.ServerResponse,
-    rpc: IRpcServer
-  ) {
+  async rpcUnaryUnary(req: http.IncomingMessage, res: http.ServerResponse, rpc: IRpcServer) {
     const contentType = req.headers["content-type"];
     const buf = await this._readRequestBody(req);
     if (contentType == "application/json") {

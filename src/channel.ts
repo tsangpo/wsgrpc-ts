@@ -19,8 +19,8 @@ function optionsMetadata({ contentType, authorizationToken }: IOptions): IMetada
 }
 
 export class Channel implements IChannel {
-  agent!: IAgent;
-  callback?: (req: any, res?: any, err?: any) => void;
+  private agent!: IAgent;
+  private callback?: (req: any, res?: any, err?: any) => void;
 
   constructor(url: string, options?: IOptions) {
     this.reset(url, options);
@@ -54,11 +54,11 @@ export class Channel implements IChannel {
       .rpcUnaryUnary(service, method, requestSerializer, responseDeserializeBinary, request)
       .then(
         (res: any) => {
-          this.callback && this.callback(request, res);
+          this.callback?.(request, res);
           return res;
         },
         (err: any) => {
-          this.callback && this.callback(request, null, err);
+          this.callback?.(request, undefined, err);
           throw err;
         }
       );
@@ -110,11 +110,11 @@ export class Channel implements IChannel {
       .rpcStreamUnary(service, method, requestSerializer, responseDeserializeBinary, request)
       .then(
         (res: any) => {
-          this.callback && this.callback(request, res);
+          this.callback?.(request, res);
           return res;
         },
         (err: any) => {
-          this.callback && this.callback(request, null, err);
+          this.callback?.(request, null, err);
           throw err;
         }
       );
