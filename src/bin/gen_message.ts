@@ -161,9 +161,7 @@ export function pbjsEncodeType(t: protobuf.Type) {
   return `
   export function encode(message:I${t.name}, writer:$Writer): $Writer;
   export function encode(message:I${t.name}): Uint8Array;
-  export function encode(message:I${
-    t.name
-  }, writer?:$Writer): $Writer|Uint8Array {
+  export function encode(message:I${t.name}, writer?:$Writer): $Writer|Uint8Array {
     const end = !writer
     if (!writer)
       writer = $Writer.create();
@@ -176,9 +174,7 @@ export function pbjsInterfaceType(t: protobuf.Type) {
   return `
   ${C(t.comment)}
   export interface I${t.name} {
-    ${t.fieldsArray
-      .map((f) => `${f.name}?: ${toTsType(f)} ${C(f.comment)}`)
-      .join("\n    ")}
+    ${t.fieldsArray.map((f) => `${f.name}?: ${toTsType(f)} ${C(f.comment)}`).join("\n    ")}
   }`;
 }
 
@@ -227,7 +223,7 @@ function toTsType(field: protobuf.Field) {
     case "sint64":
     case "fixed64":
     case "sfixed64":
-      type = "number";
+      type = "bigint";
       break;
     case "bool":
       type = "boolean";

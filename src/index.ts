@@ -1,5 +1,4 @@
-require("protobufjs/src/util/minimal").Long = null;
-
+require("./protofubjs-patch");
 export { Writer, Reader } from "protobufjs/minimal";
 export type { IChannel, IStream, IServiceFactory } from "./types";
 export { Stream, Future } from "./utils";
