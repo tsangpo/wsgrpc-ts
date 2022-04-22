@@ -14,7 +14,7 @@ export class HttpAgent implements IAgent {
   url: string;
   metadata: IMetadata;
 
-  constructor(url: string, metadata?: IMetadata) {
+  constructor(url: string, metadata?: IMetadata, private fetchFunction = fetch) {
     this.url = url + (url.endsWith("/") ? "" : "/");
 
     if (!metadata) {
@@ -53,7 +53,7 @@ export class HttpAgent implements IAgent {
     }
 
     const url = this.url + service + "/" + method;
-    const res = await fetch(url, {
+    const res = await this.fetchFunction(url, {
       method: "POST",
       body: reqBody,
       headers: this.metadata,

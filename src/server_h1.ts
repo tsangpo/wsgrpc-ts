@@ -98,7 +98,7 @@ export class HttpHandler {
       contentType == "application/grpc-web+proto"
     ) {
       const s = grpcWebDecodeStream(buf);
-      const request = s.messages[0];
+      const request = rpc.requestDecode(s.messages[0]);
       const response = await rpc.exec(request);
       res.setHeader("content-type", contentType);
       const result = grpcWebEncodeStream({

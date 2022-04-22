@@ -1,6 +1,6 @@
 {
   "name": "wsgrpc",
-  "version": "3.1.2",
+  "version": "3.1.3",
   "description": "A RPC code generator and runtime. Codes of client side and server side are generated from a grpc proto file.",
   "author": "tsangpo <tsangpozheng@gmail.com> (https://github.com/tsangpo)",
   "repository": "github:tsangpo/wsgrpc-ts",

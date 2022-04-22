@@ -5,6 +5,7 @@ import { HttpAgent } from "./channel_h1";
 interface IOptions {
   contentType?: "grpc" | "grpc-web" | "grpc-web+proto" | "json";
   authorizationToken?: string;
+  fetch?: typeof fetch;
 }
 
 function optionsMetadata({ contentType, authorizationToken }: IOptions): IMetadata {
@@ -34,7 +35,7 @@ export class Channel implements IChannel {
     this.agent?.reset();
     if (url.startsWith("/") || url.startsWith("http:") || url.startsWith("https:")) {
       const metadata = optionsMetadata(options || {});
-      this.agent = new HttpAgent(url, metadata);
+      this.agent = new HttpAgent(url, metadata, options?.fetch);
     } else if (url.startsWith("ws:") || url.startsWith("wss:")) {
       this.agent = new WebSocketAgent(url);
     } else {
