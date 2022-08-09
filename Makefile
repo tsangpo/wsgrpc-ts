@@ -10,8 +10,8 @@ build:
 	pnpx esbuild --bundle --minify --platform=neutral --format=cjs ./src/index.ts --outfile=dist/lib.cjs
 
 	### types
-	pnpx tsc
-	pnpx api-extractor run --local --verbose
+	./node_modules/.bin/tsc
+	./node_modules/.bin/api-extractor run --local --verbose
 
 build-tsup:
 	# not work
