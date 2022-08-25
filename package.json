@@ -1,6 +1,6 @@
 {
   "name": "wsgrpc",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "description": "A RPC code generator and runtime. Codes of client side and server side are generated from a grpc proto file.",
   "author": "tsangpo <tsangpozheng@gmail.com> (https://github.com/tsangpo)",
   "repository": "github:tsangpo/wsgrpc-ts",
@@ -25,10 +25,10 @@
     }
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.29.0",
-    "@types/node": "^18.6.5",
+    "@microsoft/api-extractor": "^7.29.5",
+    "@types/node": "^18.7.13",
     "@types/ws": "^8.5.3",
-    "esbuild": "^0.14.54",
+    "esbuild": "^0.15.5",
     "protobufjs": "^6.11.3",
     "ts-node": "^10.9.1",
     "typescript": "^4.7.4"

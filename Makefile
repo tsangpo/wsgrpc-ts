@@ -28,9 +28,9 @@ test:
 	# ts-node src/bin/main.ts src/v1/proto/data.proto
 	# npx pbjs -t static-module -o test/test.pbjs.js -w es6 --es6 test/test.proto
 	# ts-node src/bin/main.ts test/test.proto
-	node dist/bin.js test/protos/test.proto
-	node dist/bin.js test/protos/route_guide.proto
-	node dist/bin.js test/protos/greet.proto
+	node dist/bin.cjs test/protos/test.proto
+	node dist/bin.cjs test/protos/route_guide.proto
+	node dist/bin.cjs test/protos/greet.proto
 	ts-node test/test.ts
 	node --inspect --loader ts-node/esm test/test.ts
 	ts-node test/route_guide_server.ts

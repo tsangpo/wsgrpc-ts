@@ -4,8 +4,9 @@
 // @ts-nocheck
 
 import {
-  IStream as $IStream,
   IChannel as $IChannel,
+  IServiceFactory as $IServiceFactory,
+  IStream as $IStream,
   Reader as $Reader,
   Writer as $Writer,
 } from "../../src";
@@ -22,10 +23,7 @@ export namespace routeguide {
   }
 
   export class RouteGuide implements IRouteGuide {
-    static addToServer(
-      server: any,
-      factory: (request: any) => Promise<IRouteGuide> | IRouteGuide
-    ) {
+    static addToServer(server: any, factory: $IServiceFactory<IRouteGuide>) {
       server.addService(
         "routeguide.RouteGuide",
         {
@@ -70,9 +68,7 @@ export namespace routeguide {
       );
     }
 
-    async routeChat(
-      request: $IStream<IRouteNote>
-    ): Promise<$IStream<IRouteNote>> {
+    async routeChat(request: $IStream<IRouteNote>): Promise<$IStream<IRouteNote>> {
       return await this.channel.rpcStreamStream(
         "routeguide.RouteGuide",
         "routeChat",
@@ -90,10 +86,7 @@ export namespace routeguide {
   export namespace Point {
     export function encode(message: IPoint, writer: $Writer): $Writer;
     export function encode(message: IPoint): Uint8Array;
-    export function encode(
-      message: IPoint,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IPoint, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
@@ -108,10 +101,7 @@ export namespace routeguide {
 
     export function decode(reader: Uint8Array): IPoint;
     export function decode(reader: $Reader, length: number): IPoint;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IPoint {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IPoint {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
@@ -143,10 +133,7 @@ export namespace routeguide {
   export namespace Rectangle {
     export function encode(message: IRectangle, writer: $Writer): $Writer;
     export function encode(message: IRectangle): Uint8Array;
-    export function encode(
-      message: IRectangle,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IRectangle, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
@@ -160,10 +147,7 @@ export namespace routeguide {
 
     export function decode(reader: Uint8Array): IRectangle;
     export function decode(reader: $Reader, length: number): IRectangle;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IRectangle {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IRectangle {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
@@ -195,15 +179,11 @@ export namespace routeguide {
   export namespace Feature {
     export function encode(message: IFeature, writer: $Writer): $Writer;
     export function encode(message: IFeature): Uint8Array;
-    export function encode(
-      message: IFeature,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IFeature, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
-      if (message.name != null && message.name != undefined)
-        writer.uint32(10).string(message.name);
+      if (message.name != null && message.name != undefined) writer.uint32(10).string(message.name);
 
       if (message.location != null && message.location != undefined)
         Point.encode(message.location, writer.uint32(18).fork()).ldelim();
@@ -212,10 +192,7 @@ export namespace routeguide {
 
     export function decode(reader: Uint8Array): IFeature;
     export function decode(reader: $Reader, length: number): IFeature;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IFeature {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IFeature {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
@@ -247,10 +224,7 @@ export namespace routeguide {
   export namespace RouteNote {
     export function encode(message: IRouteNote, writer: $Writer): $Writer;
     export function encode(message: IRouteNote): Uint8Array;
-    export function encode(
-      message: IRouteNote,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IRouteNote, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
@@ -265,10 +239,7 @@ export namespace routeguide {
 
     export function decode(reader: Uint8Array): IRouteNote;
     export function decode(reader: $Reader, length: number): IRouteNote;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IRouteNote {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IRouteNote {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
@@ -302,10 +273,7 @@ export namespace routeguide {
   export namespace RouteSummary {
     export function encode(message: IRouteSummary, writer: $Writer): $Writer;
     export function encode(message: IRouteSummary): Uint8Array;
-    export function encode(
-      message: IRouteSummary,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IRouteSummary, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
@@ -326,10 +294,7 @@ export namespace routeguide {
 
     export function decode(reader: Uint8Array): IRouteSummary;
     export function decode(reader: $Reader, length: number): IRouteSummary;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IRouteSummary {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IRouteSummary {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;

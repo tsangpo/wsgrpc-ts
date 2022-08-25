@@ -4,11 +4,12 @@
 // @ts-nocheck
 
 import {
-  IStream as $IStream,
   IChannel as $IChannel,
+  IServiceFactory as $IServiceFactory,
+  IStream as $IStream,
   Reader as $Reader,
   Writer as $Writer,
-} from "../../dist/lib.esm.js";
+} from "../../src";
 
 export namespace test {
   export interface IW {}
@@ -19,25 +20,18 @@ export namespace test {
     export namespace N {
       export function encode(message: IN, writer: $Writer): $Writer;
       export function encode(message: IN): Uint8Array;
-      export function encode(
-        message: IN,
-        writer?: $Writer
-      ): $Writer | Uint8Array {
+      export function encode(message: IN, writer?: $Writer): $Writer | Uint8Array {
         const end = !writer;
         if (!writer) writer = $Writer.create();
 
-        if (message.id != null && message.id != undefined)
-          writer.uint32(8).int32(message.id);
+        if (message.id != null && message.id != undefined) writer.uint32(8).int32(message.id);
 
         return end ? writer.finish() : writer;
       }
 
       export function decode(reader: Uint8Array): IN;
       export function decode(reader: $Reader, length: number): IN;
-      export function decode(
-        reader: Uint8Array | $Reader,
-        length?: number
-      ): IN {
+      export function decode(reader: Uint8Array | $Reader, length?: number): IN {
         if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length;
         const message = {} as any;
@@ -60,10 +54,7 @@ export namespace test {
 
     export function encode(message: IW, writer: $Writer): $Writer;
     export function encode(message: IW): Uint8Array;
-    export function encode(
-      message: IW,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IW, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
@@ -96,7 +87,7 @@ export namespace test {
     body?: Uint8Array;
     nnn?: number[];
     n?: W.IN;
-    iii?: number;
+    iii?: bigint;
     rii?: number[];
     rss?: string[];
   }
@@ -109,10 +100,7 @@ export namespace test {
     export namespace Header {
       export function encode(message: IHeader, writer: $Writer): $Writer;
       export function encode(message: IHeader): Uint8Array;
-      export function encode(
-        message: IHeader,
-        writer?: $Writer
-      ): $Writer | Uint8Array {
+      export function encode(message: IHeader, writer?: $Writer): $Writer | Uint8Array {
         const end = !writer;
         if (!writer) writer = $Writer.create();
 
@@ -127,10 +115,7 @@ export namespace test {
 
       export function decode(reader: Uint8Array): IHeader;
       export function decode(reader: $Reader, length: number): IHeader;
-      export function decode(
-        reader: Uint8Array | $Reader,
-        length?: number
-      ): IHeader {
+      export function decode(reader: Uint8Array | $Reader, length?: number): IHeader {
         if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length;
         const message = {} as any;
@@ -163,10 +148,7 @@ export namespace test {
     export namespace Trailer {
       export function encode(message: ITrailer, writer: $Writer): $Writer;
       export function encode(message: ITrailer): Uint8Array;
-      export function encode(
-        message: ITrailer,
-        writer?: $Writer
-      ): $Writer | Uint8Array {
+      export function encode(message: ITrailer, writer?: $Writer): $Writer | Uint8Array {
         const end = !writer;
         if (!writer) writer = $Writer.create();
 
@@ -181,10 +163,7 @@ export namespace test {
 
       export function decode(reader: Uint8Array): ITrailer;
       export function decode(reader: $Reader, length: number): ITrailer;
-      export function decode(
-        reader: Uint8Array | $Reader,
-        length?: number
-      ): ITrailer {
+      export function decode(reader: Uint8Array | $Reader, length?: number): ITrailer {
         if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length;
         const message = {} as any;
@@ -211,10 +190,7 @@ export namespace test {
 
     export function encode(message: IDataFrame, writer: $Writer): $Writer;
     export function encode(message: IDataFrame): Uint8Array;
-    export function encode(
-      message: IDataFrame,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IDataFrame, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
@@ -228,42 +204,34 @@ export namespace test {
         for (let i = 0; i < message.trailer.length; ++i)
           Trailer.encode(message.trailer[i], writer.uint32(26).fork()).ldelim();
 
-      if (message.body != null && message.body != undefined)
-        writer.uint32(34).bytes(message.body);
+      if (message.body != null && message.body != undefined) writer.uint32(34).bytes(message.body);
 
       if (message.nnn != null && message.nnn.length) {
         writer.uint32(42).fork();
-        for (let i = 0; i < message.nnn.length; ++i)
-          writer.int32(message.nnn[i]);
+        for (let i = 0; i < message.nnn.length; ++i) writer.int32(message.nnn[i]);
         writer.ldelim();
       }
 
       if (message.n != null && message.n != undefined)
         W.N.encode(message.n, writer.uint32(82).fork()).ldelim();
 
-      if (message.iii != null && message.iii != undefined)
-        writer.uint32(88).int64(message.iii);
+      if (message.iii != null && message.iii != undefined) writer.uint32(88).int64(message.iii);
 
       if (message.rii != null && message.rii.length) {
         writer.uint32(98).fork();
-        for (let i = 0; i < message.rii.length; ++i)
-          writer.int32(message.rii[i]);
+        for (let i = 0; i < message.rii.length; ++i) writer.int32(message.rii[i]);
         writer.ldelim();
       }
 
       if (message.rss != null && message.rss.length)
-        for (let i = 0; i < message.rss.length; ++i)
-          writer.uint32(106).string(message.rss[i]);
+        for (let i = 0; i < message.rss.length; ++i) writer.uint32(106).string(message.rss[i]);
 
       return end ? writer.finish() : writer;
     }
 
     export function decode(reader: Uint8Array): IDataFrame;
     export function decode(reader: $Reader, length: number): IDataFrame;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IDataFrame {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IDataFrame {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
@@ -281,8 +249,7 @@ export namespace test {
 
           // Repeated fields
           case 3:
-            if (!(message.trailer && message.trailer.length))
-              message.trailer = [];
+            if (!(message.trailer && message.trailer.length)) message.trailer = [];
 
             message.trailer.push(Trailer.decode(reader, reader.uint32()));
 
@@ -345,25 +312,18 @@ export namespace test {
   export namespace Endponit {
     export function encode(message: IEndponit, writer: $Writer): $Writer;
     export function encode(message: IEndponit): Uint8Array;
-    export function encode(
-      message: IEndponit,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IEndponit, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
-      if (message.url != null && message.url != undefined)
-        writer.uint32(10).string(message.url);
+      if (message.url != null && message.url != undefined) writer.uint32(10).string(message.url);
 
       return end ? writer.finish() : writer;
     }
 
     export function decode(reader: Uint8Array): IEndponit;
     export function decode(reader: $Reader, length: number): IEndponit;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IEndponit {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IEndponit {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
@@ -390,25 +350,18 @@ export namespace test {
   export namespace Channel {
     export function encode(message: IChannel, writer: $Writer): $Writer;
     export function encode(message: IChannel): Uint8Array;
-    export function encode(
-      message: IChannel,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IChannel, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
-      if (message.url != null && message.url != undefined)
-        writer.uint32(10).string(message.url);
+      if (message.url != null && message.url != undefined) writer.uint32(10).string(message.url);
 
       return end ? writer.finish() : writer;
     }
 
     export function decode(reader: Uint8Array): IChannel;
     export function decode(reader: $Reader, length: number): IChannel;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IChannel {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IChannel {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
@@ -435,10 +388,7 @@ export namespace test {
     export namespace OK {
       export function encode(message: IOK, writer: $Writer): $Writer;
       export function encode(message: IOK): Uint8Array;
-      export function encode(
-        message: IOK,
-        writer?: $Writer
-      ): $Writer | Uint8Array {
+      export function encode(message: IOK, writer?: $Writer): $Writer | Uint8Array {
         const end = !writer;
         if (!writer) writer = $Writer.create();
 
@@ -447,10 +397,7 @@ export namespace test {
 
       export function decode(reader: Uint8Array): IOK;
       export function decode(reader: $Reader, length: number): IOK;
-      export function decode(
-        reader: Uint8Array | $Reader,
-        length?: number
-      ): IOK {
+      export function decode(reader: Uint8Array | $Reader, length?: number): IOK {
         if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length;
         const message = {} as any;
@@ -475,10 +422,7 @@ export namespace test {
 
     export function encode(message: ISimple, writer: $Writer): $Writer;
     export function encode(message: ISimple): Uint8Array;
-    export function encode(
-      message: ISimple,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: ISimple, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
@@ -487,10 +431,7 @@ export namespace test {
 
     export function decode(reader: Uint8Array): ISimple;
     export function decode(reader: $Reader, length: number): ISimple;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): ISimple {
+    export function decode(reader: Uint8Array | $Reader, length?: number): ISimple {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
@@ -517,10 +458,7 @@ export namespace test {
   }
 
   export class WS implements IWS {
-    static addToServer(
-      server: any,
-      factory: (request: any) => Promise<IWS> | IWS
-    ) {
+    static addToServer(server: any, factory: $IServiceFactory<IWS>) {
       server.addService(
         "test.WS",
         {

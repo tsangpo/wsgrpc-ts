@@ -4,8 +4,9 @@
 // @ts-nocheck
 
 import {
-  IStream as $IStream,
   IChannel as $IChannel,
+  IServiceFactory as $IServiceFactory,
+  IStream as $IStream,
   Reader as $Reader,
   Writer as $Writer,
 } from "../../src";
@@ -16,10 +17,7 @@ export namespace greet {
   }
 
   export class Greeter implements IGreeter {
-    static addToServer(
-      server: any,
-      factory: (request: any) => Promise<IGreeter> | IGreeter
-    ) {
+    static addToServer(server: any, factory: $IServiceFactory<IGreeter>) {
       server.addService(
         "greet.Greeter",
         { sayHello: [HelloRequest.decode, HelloReply.encode, false, false] },
@@ -46,25 +44,18 @@ export namespace greet {
   export namespace HelloRequest {
     export function encode(message: IHelloRequest, writer: $Writer): $Writer;
     export function encode(message: IHelloRequest): Uint8Array;
-    export function encode(
-      message: IHelloRequest,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IHelloRequest, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
-      if (message.name != null && message.name != undefined)
-        writer.uint32(10).string(message.name);
+      if (message.name != null && message.name != undefined) writer.uint32(10).string(message.name);
 
       return end ? writer.finish() : writer;
     }
 
     export function decode(reader: Uint8Array): IHelloRequest;
     export function decode(reader: $Reader, length: number): IHelloRequest;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IHelloRequest {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IHelloRequest {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
@@ -91,10 +82,7 @@ export namespace greet {
   export namespace HelloReply {
     export function encode(message: IHelloReply, writer: $Writer): $Writer;
     export function encode(message: IHelloReply): Uint8Array;
-    export function encode(
-      message: IHelloReply,
-      writer?: $Writer
-    ): $Writer | Uint8Array {
+    export function encode(message: IHelloReply, writer?: $Writer): $Writer | Uint8Array {
       const end = !writer;
       if (!writer) writer = $Writer.create();
 
@@ -106,10 +94,7 @@ export namespace greet {
 
     export function decode(reader: Uint8Array): IHelloReply;
     export function decode(reader: $Reader, length: number): IHelloReply;
-    export function decode(
-      reader: Uint8Array | $Reader,
-      length?: number
-    ): IHelloReply {
+    export function decode(reader: Uint8Array | $Reader, length?: number): IHelloReply {
       if (!(reader instanceof $Reader)) reader = $Reader.create(reader);
       let end = length === undefined ? reader.len : reader.pos + length;
       const message = {} as any;
